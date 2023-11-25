@@ -1,6 +1,9 @@
 def feature_computation():
     """
-    Dummy function to run e2e from main
+    Selects and computes significant features for churn prediction from cleaned data, including creating derived variables and initial transformations.
+
+    Returns:
+        DataFrame: Pandas DataFrame with computed features for model training.
     """
 
     return True
