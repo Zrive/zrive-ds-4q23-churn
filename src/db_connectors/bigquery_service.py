@@ -13,12 +13,13 @@ class BigqueryService:
             returns Dataframe from sql query
     """
 
-    def __init__(self) -> None:
+    def __init__(self, path="config/mm-bi-catedras-upm.json") -> None:
         """
         Constructs the Bigquery Client with the json credentials
         """
+        self.path = path
 
-        with open("config/mm-bi-catedras-upm.json") as credentials_json:
+        with open(path) as credentials_json:
             credentials = json.load(credentials_json)
 
         bq_credentials = service_account.Credentials.from_service_account_info(
@@ -26,6 +27,7 @@ class BigqueryService:
         )
 
         self.client = bigquery.Client(credentials=bq_credentials)
+        # TODO: Catch file errors and BigQuery exceptions
 
     def query_to_df(self, query: str) -> pd.DataFrame:
         """
