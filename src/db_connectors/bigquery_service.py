@@ -2,6 +2,8 @@ import json
 import pandas as pd
 from google.cloud import bigquery
 from google.oauth2 import service_account
+from google.cloud import bigquery_storage_v1
+
 
 
 class BigqueryService:
@@ -27,6 +29,8 @@ class BigqueryService:
         )
 
         self.client = bigquery.Client(credentials=bq_credentials)
+        self.bqstorageclient = bigquery_storage_v1.BigQueryReadClient(credentials=bq_credentials)
+
         # TODO: Catch file errors and BigQuery exceptions
 
     def query_to_df(self, query: str) -> pd.DataFrame:
@@ -39,4 +43,5 @@ class BigqueryService:
 
         query_job = self.client.query(query)
 
-        return query_job.result().to_dataframe()
+        # Use BigQuery Storage API
+        return query_job.result().to_dataframe(create_bqstorage_client=self.bqstorageclient)
