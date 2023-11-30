@@ -1,24 +1,43 @@
 # Load libraries and data
 
+Enter your project root:
+
+
+```python
+project_root = '/home/dan1dr/zrive-ds-4q24-churn'
+```
+
 
 ```python
 import sys
 import os
-import pandas as pd
+import logging
 
-# Get project root and change wd
+logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(message)s")
+
+# Define the project root path
 current_wd = os.getcwd()
-project_root = os.path.dirname(os.path.dirname(current_wd))
-os.chdir(project_root)
 
+# Change the working directory if necessary
+if current_wd != project_root:
+    logging.info(f"Changing working directory from {current_wd} to {project_root}")
+    os.chdir(project_root)
+else:
+    logging.info("Already in the correct path")
+
+# Add 'src' directory to sys.path
 src_path = os.path.join(project_root, 'src')
 if src_path not in sys.path:
+    logging.info(f"Adding {src_path} to sys.path")
     sys.path.insert(0, src_path)
 
-# Load the needed class and functions
+# Import the modules
 from db_connectors.bigquery_service import BigqueryService
 from data_gathering import data_gathering
 ```
+
+    INFO - Already in the correct path
+
 
 Define the query
 
@@ -30,7 +49,7 @@ WHERE IS_CUST_SEGM_RESI > 0
   AND IS_CUST_BILL_POST_CURR = TRUE
   AND CUST_BUNDLE_CURR = 'FMC'
   AND NUM_IMPAGOS = 0
-  LIMIT 10000
+  LIMIT 1000
   """
 ```
 
@@ -92,21 +111,21 @@ sample.head()
     <tr>
       <th>0</th>
       <td>EUSKALTEL</td>
-      <td>441555</td>
+      <td>2289093</td>
       <td>2022</td>
       <td>12</td>
       <td>202212</td>
       <td>1</td>
       <td>0</td>
       <td>0</td>
-      <td>EXCLUSIVO</td>
-      <td>EXCLUSIVO</td>
+      <td>PLAT. FIDELIZACION/RETENCION</td>
+      <td>PLAT. FIDELIZACION/RETENCION</td>
       <td>...</td>
       <td>NaN</td>
       <td>&lt;NA&gt;</td>
       <td>&lt;NA&gt;</td>
       <td>&lt;NA&gt;</td>
-      <td>0</td>
+      <td>2</td>
       <td>NaN</td>
       <td>&lt;NA&gt;</td>
       <td>NaN</td>
@@ -116,15 +135,15 @@ sample.head()
     <tr>
       <th>1</th>
       <td>EUSKALTEL</td>
-      <td>568658</td>
+      <td>6030465</td>
       <td>2022</td>
       <td>12</td>
       <td>202212</td>
       <td>1</td>
       <td>0</td>
       <td>0</td>
-      <td>CARTERA</td>
-      <td>CARTERA</td>
+      <td>EXCLUSIVO</td>
+      <td>EXCLUSIVO</td>
       <td>...</td>
       <td>NaN</td>
       <td>&lt;NA&gt;</td>
@@ -140,15 +159,15 @@ sample.head()
     <tr>
       <th>2</th>
       <td>EUSKALTEL</td>
-      <td>2331514</td>
+      <td>2351645</td>
       <td>2022</td>
       <td>12</td>
       <td>202212</td>
       <td>1</td>
       <td>0</td>
       <td>0</td>
-      <td>PLAT. FIDELIZACION/RETENCION</td>
-      <td>PLAT. FIDELIZACION/RETENCION</td>
+      <td>EXCLUSIVO</td>
+      <td>EXCLUSIVO</td>
       <td>...</td>
       <td>NaN</td>
       <td>&lt;NA&gt;</td>
@@ -164,7 +183,7 @@ sample.head()
     <tr>
       <th>3</th>
       <td>EUSKALTEL</td>
-      <td>359543</td>
+      <td>1412390</td>
       <td>2022</td>
       <td>12</td>
       <td>202212</td>
@@ -172,7 +191,7 @@ sample.head()
       <td>0</td>
       <td>0</td>
       <td>CARTERA</td>
-      <td>CARTERA</td>
+      <td>WEB ASISTIDA INBOUND</td>
       <td>...</td>
       <td>NaN</td>
       <td>&lt;NA&gt;</td>
@@ -188,7 +207,7 @@ sample.head()
     <tr>
       <th>4</th>
       <td>EUSKALTEL</td>
-      <td>1498138</td>
+      <td>3565710</td>
       <td>2022</td>
       <td>12</td>
       <td>202212</td>
@@ -215,8 +234,3 @@ sample.head()
 </div>
 
 
-
-
-```python
-
-```
