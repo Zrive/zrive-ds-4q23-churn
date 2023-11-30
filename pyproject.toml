@@ -21,6 +21,9 @@ db-dtypes = "^1.1.1"
 google-cloud-bigquery-storage = "^2.22.0"
 nbconvert = "^7.11.0"
 pandoc = "^2.3"
+dask = {extras = ["delayed"], version = "^2023.11.0"}
+tqdm = "^4.66.1"
+pandas-gbq = "^0.19.2"
 
 
 [build-system]
