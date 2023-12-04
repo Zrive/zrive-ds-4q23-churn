@@ -6,11 +6,8 @@ def get_logger(name):
     handler.setFormatter(formatter)
 
     logger = logging.getLogger(name)
+    if not logger.handlers:  # Check if handlers already exist
+        logger.addHandler(handler)
     logger.setLevel(logging.INFO)
-    logger.addHandler(handler)
 
     return logger
-
-
-
-
