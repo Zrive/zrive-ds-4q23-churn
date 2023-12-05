@@ -47,10 +47,10 @@ def main_orchestrator():
     get_initial_params()
     print(train_from, train_to)
     raw_data = data_gathering()
-    clean_data = data_cleaning()
-    features = feature_computation()
-    model = modeling()
-    eval_result = evaluation()
+    clean_data = data_cleaning(raw_data)
+    features, target = feature_computation(clean_data)
+    model = modeling(features, target)
+    eval_result = evaluation(model, features, target)
 
     return eval_result
 

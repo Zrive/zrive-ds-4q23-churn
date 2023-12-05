@@ -15,7 +15,11 @@ def data_gathering(query: str) -> pd.DataFrame:
     '''query = """
             SELECT *
             FROM `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp2023_1`
-            LIMIT 5
+            WHERE IS_CUST_SEGM_RESI > 0 
+            AND IS_CUST_BILL_POST_CURR = TRUE
+            AND CUST_BUNDLE_CURR = 'FMC'
+            AND NUM_IMPAGOS = 0
+            LIMIT 1000
             """
     '''
 
