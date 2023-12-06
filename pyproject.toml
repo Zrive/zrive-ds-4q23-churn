@@ -21,6 +21,7 @@ db-dtypes = "^1.1.1"
 google-cloud-bigquery-storage = "^2.22.0"
 nbconvert = "^7.11.0"
 pandoc = "^2.3"
+seaborn = "^0.13.0"
 
 [build-system]
 requires = ["poetry-core"]
