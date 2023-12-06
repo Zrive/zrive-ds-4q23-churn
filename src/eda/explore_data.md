@@ -4,7 +4,7 @@ Enter your project root:
 
 
 ```python
-project_root = '/home/dan1dr/zrive-ds-4q24-churn'
+project_root = "/home/dan1dr/zrive-ds-4q24-churn"
 ```
 
 
@@ -18,7 +18,6 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 import pandas as pd
-from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import precision_recall_curve, roc_curve, auc
 import matplotlib.pyplot as plt
 
@@ -33,7 +32,7 @@ else:
     print("Already in the correct path")
 
 # Add 'src' directory to sys.path
-src_path = os.path.join(project_root, 'src')
+src_path = os.path.join(project_root, "src")
 if src_path not in sys.path:
     print(f"Adding {src_path} to sys.path")
     sys.path.insert(0, src_path)
@@ -42,6 +41,7 @@ if src_path not in sys.path:
 from db_connectors.bigquery_service import BigqueryService
 from data_gathering import data_gathering
 from utils.logger import get_logger
+
 logger = get_logger(__name__)
 ```
 
@@ -55,39 +55,77 @@ Define the query:
 
 
 ```python
-query_sql_22 = """WITH selectable_customer as (
-  SELECT customer_id
-  FROM `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp2022`
-  WHERE IS_CUST_SEGM_RESI > 0 
-  AND IS_CUST_BILL_POST_CURR = TRUE
-  AND CUST_BUNDLE_CURR = 'FMC'
-  AND NUM_IMPAGOS = 0
-  AND pago_final_0 IS NOT NULL
-  GROUP BY customer_id
-),
-
-customer_selected as (
-  SELECT customer_id as selected_customer
-  FROM selectable_customer
-  WHERE RAND() < 0.1
-)
-
-SELECT 
-customer_id, MONTH, YEAR, pago_final_0, dif_pago_final_prev_month, dif_pago_final_prev_2_month, dif_pago_final_prev_3_month, periodica_0, dif_periodica_prev_month, dif_periodica_prev_2_month, 
-dif_periodica_prev_3_month, consumo_0, dif_consumo_prev_month, dif_consumo_prev_2_month, dif_consumo_prev_3_month, aperiodica_0, dif_aperiodica_prev_month, 
-dif_aperiodica_prev_2_month, dif_aperiodica_prev_3_month, discount_0, dif_discount_prev_month, dif_discount_prev_2_month, dif_discount_prev_3_month, ajuste_0, 
-dif_ajuste_prev_month, dif_ajuste_prev_2_month, dif_ajuste_prev_3_month, Tota_Compra_disp, Curr_Compra_disp, Curr_Compra_Finanz_disp, Curr_Finanz_disp, Month_purchase_disp, Modelo_disp, Import_Rest_quota_disp, pvp_total_disp, pvp_total_disp_movil, Curr_cancel_disp, Tota_cancel_disp
-NUM_GB_OWNN_CURR, NUM_GB_2G_CURR, NUM_GB_3G_CURR, NUM_GB_4G_CURR, NUM_GB_5G_CURR, NUM_SESS_CURR, NUM_SECS_CURR, NUM_CALL_CURR, NUM_CALL_WEEK_CURR, NUM_CALL_WEEKEND_CURR, 
-NUM_SECS_WEEK_CURR, NUM_SECS_WEEKEND_CURR, NUM_CALL_WEEK, NUM_CALL_WEEKEND, NUM_DAYS_LINE_TYPE_FIXE_POST_DEA
-FROM `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp2022`
+query_sql_22 = """
+WITH selectable_customer AS
+(
+         SELECT   customer_id
+         FROM     `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp2022`
+         GROUP BY customer_id ), customer_selected AS
+(
+       SELECT customer_id AS selected_customer
+       FROM   selectable_customer
+       WHERE  RAND() < 0.1 )
+SELECT     customer_id,
+           MONTH,
+           YEAR,
+           pago_final_0,
+           dif_pago_final_prev_month,
+           dif_pago_final_prev_2_month,
+           dif_pago_final_prev_3_month,
+           periodica_0,
+           dif_periodica_prev_month,
+           dif_periodica_prev_2_month,
+           dif_periodica_prev_3_month,
+           consumo_0,
+           dif_consumo_prev_month,
+           dif_consumo_prev_2_month,
+           dif_consumo_prev_3_month,
+           aperiodica_0,
+           dif_aperiodica_prev_month,
+           dif_aperiodica_prev_2_month,
+           dif_aperiodica_prev_3_month,
+           discount_0,
+           dif_discount_prev_month,
+           dif_discount_prev_2_month,
+           dif_discount_prev_3_month,
+           ajuste_0,
+           dif_ajuste_prev_month,
+           dif_ajuste_prev_2_month,
+           dif_ajuste_prev_3_month,
+           Tota_Compra_disp,
+           Curr_Compra_disp,
+           Curr_Compra_Finanz_disp,
+           Curr_Finanz_disp,
+           Month_purchase_disp,
+           Modelo_disp,
+           Import_Rest_quota_disp,
+           pvp_total_disp,
+           pvp_total_disp_movil,
+           Curr_cancel_disp,
+           Tota_cancel_disp NUM_GB_OWNN_CURR,
+           NUM_GB_2G_CURR,
+           NUM_GB_3G_CURR,
+           NUM_GB_4G_CURR,
+           NUM_GB_5G_CURR,
+           NUM_SESS_CURR,
+           NUM_SECS_CURR,
+           NUM_CALL_CURR,
+           NUM_CALL_WEEK_CURR,
+           NUM_CALL_WEEKEND_CURR,
+           NUM_SECS_WEEK_CURR,
+           NUM_SECS_WEEKEND_CURR,
+           NUM_CALL_WEEK,
+           NUM_CALL_WEEKEND,
+           NUM_DAYS_LINE_TYPE_FIXE_POST_DEA
+FROM       `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp2022`
 INNER JOIN customer_selected
-ON customer_id = selected_customer
-WHERE IS_CUST_SEGM_RESI > 0 
-AND IS_CUST_BILL_POST_CURR = TRUE
-AND CUST_BUNDLE_CURR = 'FMC'
-AND NUM_IMPAGOS = 0
-AND pago_final_0 IS NOT NULL
-  """
+ON         customer_id = selected_customer
+WHERE      IS_CUST_SEGM_RESI > 0
+AND        IS_CUST_BILL_POST_CURR = TRUE
+AND        CUST_BUNDLE_CURR = 'FMC'
+AND        NUM_IMPAGOS = 0
+AND        pago_final_0 IS NOT NULL
+"""
 ```
 
 
@@ -101,8 +139,8 @@ FROM `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp202
 ```python
 sample = data_gathering(query_sql_22)
 logger.info(f"Extraction completed - data_2022")
-#data_2023 = data_gathering(query_sql_23)
-#logging.info(f"Extraction completed - data_2023")
+# data_2023 = data_gathering(query_sql_23)
+# logging.info(f"Extraction completed - data_2023")
 ```
 
     INFO - Extraction completed - data_2022
@@ -112,16 +150,16 @@ logger.info(f"Extraction completed - data_2022")
 
 
 ```python
-save_path = os.path.join(project_root, 'data')
-sample.to_parquet(os.path.join(save_path, 'subsample_users.parquet'))
+save_path = os.path.join(project_root, "data")
+sample.to_parquet(os.path.join(save_path, "subsample_users.parquet"))
 ```
 
 ### Load the data
 
 
 ```python
-save_path = '/home/dan1dr/zrive-ds-4q24-churn/data'
-read_path = os.path.join(save_path, 'subsample_users.parquet')
+save_path = "/home/dan1dr/zrive-ds-4q24-churn/data"
+read_path = os.path.join(save_path, "subsample_users.parquet")
 sample = pd.read_parquet(read_path)
 ```
 
@@ -129,9 +167,262 @@ sample = pd.read_parquet(read_path)
 
 
 ```python
-pd.set_option('display.max_columns', None)
-pd.set_option('display.max_rows', 100)
+pd.set_option("display.max_columns", None)
+pd.set_option("display.max_rows", 100)
 ```
+
+
+```python
+sample[sample["customer_id"] == "620962"].sort_values(by="MONTH")
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>customer_id</th>
+      <th>MONTH</th>
+      <th>YEAR</th>
+      <th>dif_pago_final_prev_month</th>
+      <th>dif_pago_final_prev_2_month</th>
+      <th>dif_pago_final_prev_3_month</th>
+      <th>dif_consumo_prev_month</th>
+      <th>dif_consumo_prev_2_month</th>
+      <th>dif_consumo_prev_3_month</th>
+      <th>dif_discount_prev_month</th>
+      <th>dif_discount_prev_2_month</th>
+      <th>dif_discount_prev_3_month</th>
+      <th>pago_final_0</th>
+      <th>NUM_DAYS_LINE_TYPE_FIXE_POST_DEA</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>328</th>
+      <td>620962</td>
+      <td>01</td>
+      <td>2022</td>
+      <td>-0.60</td>
+      <td>-0.30</td>
+      <td>0.00</td>
+      <td>54.87</td>
+      <td>72.50</td>
+      <td>118.20</td>
+      <td>-55.47</td>
+      <td>-72.80</td>
+      <td>-118.20</td>
+      <td>71.0449</td>
+      <td>&lt;NA&gt;</td>
+    </tr>
+    <tr>
+      <th>1090</th>
+      <td>620962</td>
+      <td>02</td>
+      <td>2022</td>
+      <td>4.49</td>
+      <td>3.89</td>
+      <td>4.19</td>
+      <td>-95.69</td>
+      <td>-40.82</td>
+      <td>-23.19</td>
+      <td>100.18</td>
+      <td>44.71</td>
+      <td>27.38</td>
+      <td>75.5396</td>
+      <td>&lt;NA&gt;</td>
+    </tr>
+    <tr>
+      <th>894</th>
+      <td>620962</td>
+      <td>03</td>
+      <td>2022</td>
+      <td>10.36</td>
+      <td>14.86</td>
+      <td>14.26</td>
+      <td>-35.51</td>
+      <td>-131.20</td>
+      <td>-76.33</td>
+      <td>43.30</td>
+      <td>143.48</td>
+      <td>88.01</td>
+      <td>85.9020</td>
+      <td>&lt;NA&gt;</td>
+    </tr>
+    <tr>
+      <th>1706</th>
+      <td>620962</td>
+      <td>04</td>
+      <td>2022</td>
+      <td>-29.71</td>
+      <td>-19.35</td>
+      <td>-14.86</td>
+      <td>28.83</td>
+      <td>-6.69</td>
+      <td>-102.37</td>
+      <td>-41.11</td>
+      <td>2.19</td>
+      <td>102.37</td>
+      <td>56.1878</td>
+      <td>&lt;NA&gt;</td>
+    </tr>
+    <tr>
+      <th>1039</th>
+      <td>620962</td>
+      <td>05</td>
+      <td>2022</td>
+      <td>15.22</td>
+      <td>-14.49</td>
+      <td>-4.13</td>
+      <td>-33.41</td>
+      <td>-4.58</td>
+      <td>-40.10</td>
+      <td>33.77</td>
+      <td>-7.33</td>
+      <td>35.97</td>
+      <td>71.4079</td>
+      <td>&lt;NA&gt;</td>
+    </tr>
+    <tr>
+      <th>368</th>
+      <td>620962</td>
+      <td>06</td>
+      <td>2022</td>
+      <td>-0.36</td>
+      <td>14.86</td>
+      <td>-14.86</td>
+      <td>69.93</td>
+      <td>36.52</td>
+      <td>65.34</td>
+      <td>-70.29</td>
+      <td>-36.52</td>
+      <td>-77.62</td>
+      <td>71.0449</td>
+      <td>&lt;NA&gt;</td>
+    </tr>
+    <tr>
+      <th>1692</th>
+      <td>620962</td>
+      <td>07</td>
+      <td>2022</td>
+      <td>1.59</td>
+      <td>1.22</td>
+      <td>16.44</td>
+      <td>35.47</td>
+      <td>105.40</td>
+      <td>71.99</td>
+      <td>-29.49</td>
+      <td>-99.78</td>
+      <td>-66.01</td>
+      <td>72.6305</td>
+      <td>&lt;NA&gt;</td>
+    </tr>
+    <tr>
+      <th>273</th>
+      <td>620962</td>
+      <td>08</td>
+      <td>2022</td>
+      <td>11.22</td>
+      <td>12.81</td>
+      <td>12.44</td>
+      <td>-34.99</td>
+      <td>0.48</td>
+      <td>70.41</td>
+      <td>49.48</td>
+      <td>19.99</td>
+      <td>-50.30</td>
+      <td>83.8512</td>
+      <td>&lt;NA&gt;</td>
+    </tr>
+    <tr>
+      <th>414</th>
+      <td>620962</td>
+      <td>09</td>
+      <td>2022</td>
+      <td>-18.16</td>
+      <td>-6.94</td>
+      <td>-5.35</td>
+      <td>104.33</td>
+      <td>69.33</td>
+      <td>104.81</td>
+      <td>-95.90</td>
+      <td>-46.41</td>
+      <td>-75.90</td>
+      <td>65.6949</td>
+      <td>&lt;NA&gt;</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>620962</td>
+      <td>10</td>
+      <td>2022</td>
+      <td>22.35</td>
+      <td>4.19</td>
+      <td>15.41</td>
+      <td>-165.29</td>
+      <td>-60.96</td>
+      <td>-95.95</td>
+      <td>163.79</td>
+      <td>67.89</td>
+      <td>117.37</td>
+      <td>88.0450</td>
+      <td>&lt;NA&gt;</td>
+    </tr>
+    <tr>
+      <th>965</th>
+      <td>620962</td>
+      <td>11</td>
+      <td>2022</td>
+      <td>-33.44</td>
+      <td>-11.09</td>
+      <td>-29.24</td>
+      <td>66.08</td>
+      <td>-99.21</td>
+      <td>5.12</td>
+      <td>-72.84</td>
+      <td>90.94</td>
+      <td>-4.95</td>
+      <td>54.6065</td>
+      <td>&lt;NA&gt;</td>
+    </tr>
+    <tr>
+      <th>1662</th>
+      <td>620962</td>
+      <td>12</td>
+      <td>2022</td>
+      <td>22.54</td>
+      <td>-10.90</td>
+      <td>11.45</td>
+      <td>9.37</td>
+      <td>75.45</td>
+      <td>-89.83</td>
+      <td>-11.51</td>
+      <td>-84.36</td>
+      <td>79.43</td>
+      <td>77.1449</td>
+      <td>&lt;NA&gt;</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
 
 
 ```python
@@ -637,6 +928,7 @@ def assess_NA(data: pd.DataFrame):
 
     return nulls
 
+
 nulls = assess_NA(sample)
 ```
 
@@ -800,9 +1092,8 @@ nulls.head(20)
 
 
 ```python
-na_info_sorted = nulls.sort_values(by='percent', ascending=False)
+na_info_sorted = nulls.sort_values(by="percent", ascending=False)
 na_info_sorted.head(20)
-
 ```
 
 
@@ -960,7 +1251,7 @@ na_info_sorted.head(20)
 
 
 ```python
-sample['customer_id'].nunique()
+sample["customer_id"].nunique()
 ```
 
 
@@ -990,29 +1281,31 @@ We said we will use for the moment the current precooked metrics for payments, d
 
 ```python
 # user-info cols to aggregate data later on
-users_cols = ['customer_id', 'MONTH', 'YEAR']
+users_cols = ["customer_id", "MONTH", "YEAR"]
 
 # pre-cooked features
-diff_cols = ['dif_pago_final_prev_month', 
-                   'dif_pago_final_prev_2_month', 
-                   'dif_pago_final_prev_3_month', 
-                   'dif_consumo_prev_month', 
-                   'dif_consumo_prev_2_month', 
-                   'dif_consumo_prev_3_month', 
-                   'dif_discount_prev_month', 
-                   'dif_discount_prev_2_month', 
-                   'dif_discount_prev_3_month']
+diff_cols = [
+    "dif_pago_final_prev_month",
+    "dif_pago_final_prev_2_month",
+    "dif_pago_final_prev_3_month",
+    "dif_consumo_prev_month",
+    "dif_consumo_prev_2_month",
+    "dif_consumo_prev_3_month",
+    "dif_discount_prev_month",
+    "dif_discount_prev_2_month",
+    "dif_discount_prev_3_month",
+]
 
 # to-be-cooked features
-transform_cols = ['pago_final_0']
+transform_cols = ["pago_final_0"]
 
 # target
-target_col = ['NUM_DAYS_LINE_TYPE_FIXE_POST_DEA']
+target_col = ["NUM_DAYS_LINE_TYPE_FIXE_POST_DEA"]
 ```
 
 
 ```python
-sample = sample[users_cols + diff_cols + transform_cols + target_col ]
+sample = sample[users_cols + diff_cols + transform_cols + target_col]
 assess_NA(sample)
 ```
 
@@ -1140,9 +1433,13 @@ for col in sample.drop(columns=users_cols):
     max_value = sample[col].max()
     mean_value = sample[col].mean()
     median_value = sample[col].median()
-    perc_zero_count = (sample[col] == 0).sum() / len(sample[col])  # Count the number of zero values
+    perc_zero_count = (sample[col] == 0).sum() / len(
+        sample[col]
+    )  # Count the number of zero values
 
-    print(f"'{col}': min {min_value} | max {max_value} | mean: {mean_value} | median {median_value} | perc_zero_counts {perc_zero_count}")
+    print(
+        f"'{col}': min {min_value} | max {max_value} | mean: {mean_value} | median {median_value} | perc_zero_counts {perc_zero_count}"
+    )
 ```
 
     'dif_pago_final_prev_month': min -6113.03 | max 6114.23 | mean: 0.7766547300682327 | median 0.0 | perc_zero_counts 0.29130827470875875
@@ -1160,7 +1457,9 @@ for col in sample.drop(columns=users_cols):
 
 
 ```python
-sample.groupby('MONTH').apply(lambda x: x[x['NUM_DAYS_LINE_TYPE_FIXE_POST_DEA'] > 0]['customer_id'].nunique())
+sample.groupby("MONTH").apply(
+    lambda x: x[x["NUM_DAYS_LINE_TYPE_FIXE_POST_DEA"] > 0]["customer_id"].nunique()
+)
 ```
 
 
@@ -1185,15 +1484,16 @@ sample.groupby('MONTH').apply(lambda x: x[x['NUM_DAYS_LINE_TYPE_FIXE_POST_DEA'] 
 
 
 ```python
-grouped = sample.groupby('MONTH')
+grouped = sample.groupby("MONTH")
 
-churns = grouped.apply(lambda x: x[x['NUM_DAYS_LINE_TYPE_FIXE_POST_DEA'] > 0]['customer_id'].nunique())
-unique_customers = grouped['customer_id'].nunique()
-result = pd.DataFrame({
-    'churns': churns,
-    'unique_customers': unique_customers
-}).reset_index()
-result['ratio_positive_class'] = result['churns'] / result['unique_customers'] * 100
+churns = grouped.apply(
+    lambda x: x[x["NUM_DAYS_LINE_TYPE_FIXE_POST_DEA"] > 0]["customer_id"].nunique()
+)
+unique_customers = grouped["customer_id"].nunique()
+result = pd.DataFrame(
+    {"churns": churns, "unique_customers": unique_customers}
+).reset_index()
+result["ratio_positive_class"] = result["churns"] / result["unique_customers"] * 100
 result
 ```
 
@@ -1315,6 +1615,24 @@ result
 
 
 
+
+```python
+plt.figure(figsize=(10, 6))
+plt.bar(result["MONTH"], result["ratio_positive_class"])
+
+plt.xlabel("Month")
+plt.ylabel("Churn / Unique Customers Ratio (%)")
+plt.title("Monthly Churn Ratio")
+plt.grid(axis="y")
+plt.show()
+```
+
+
+    
+![png](explore_data_files/explore_data_32_0.png)
+    
+
+
 First view makes sense, some considerations:
 - Heavily unbalanced (3-4% of positive class, but we will even see months with 2.5%). Lots churn ocurred in Jun and July (keep an eye on seasonality too).
 - We understand negative payments as refundings; negative consumption as reversals or corrections; negative discounts as penalizations or reversal of previous 
@@ -1345,16 +1663,34 @@ def get_initial_params():
 
     # Load Logistic Regression parameters
     logistic_regression_params = {
-        'penalty': config.get('LOGISTIC_REGRESSION', 'penalty', fallback='l2'),
-        'C': config.getfloat('LOGISTIC_REGRESSION', 'C', fallback=1.0),
-        'solver': config.get('LOGISTIC_REGRESSION', 'solver', fallback='saga'),
-        'max_iter': config.getint('LOGISTIC_REGRESSION', 'max_iter', fallback=10000)
+        "penalty": config.get("LOGISTIC_REGRESSION", "penalty", fallback="l2"),
+        "C": config.getfloat("LOGISTIC_REGRESSION", "C", fallback=1.0),
+        "solver": config.get("LOGISTIC_REGRESSION", "solver", fallback="saga"),
+        "max_iter": config.getint("LOGISTIC_REGRESSION", "max_iter", fallback=10000),
     }
 ```
 
 
 ```python
-def data_cleaning(raw_df: pd.DataFrame) -> pd.DataFrame:
+def data_gathering(query: str, logger) -> pd.DataFrame:
+    """
+    Gathers raw data from DB and create a ready-to-use format.
+
+    Returns:
+        DataFrame: Pandas DataFrame with collected raw data
+    """
+    logger.info("Started querying data")
+    bq_client = BigqueryService()
+
+    result_df = bq_client.query_to_df(query)
+    logger.info(f"Data succesfully retrieved! Length: {len(result_df)}")
+
+    return result_df
+```
+
+
+```python
+def data_cleaning(raw_df: pd.DataFrame, logger) -> pd.DataFrame:
     """
     Cleans raw data by handling missing values, removing duplicates, correcting errors, and performing type conversions for data quality and consistency.
     Returns:
@@ -1362,16 +1698,41 @@ def data_cleaning(raw_df: pd.DataFrame) -> pd.DataFrame:
     """
     logger.info("Starting cleaning data")
 
+    # user-info cols to aggregate data later on
+    users_cols = ["customer_id", "MONTH", "YEAR"]
+
+    # pre-cooked features
+    diff_cols = [
+        "dif_pago_final_prev_month",
+        "dif_pago_final_prev_2_month",
+        "dif_pago_final_prev_3_month",
+        "dif_consumo_prev_month",
+        "dif_consumo_prev_2_month",
+        "dif_consumo_prev_3_month",
+        "dif_discount_prev_month",
+        "dif_discount_prev_2_month",
+        "dif_discount_prev_3_month",
+    ]
+
+    # to-be-cooked features
+    transform_cols = ["pago_final_0"]
+
+    # target
+    target_col = ["NUM_DAYS_LINE_TYPE_FIXE_POST_DEA"]
+
     filter_df = raw_df[users_cols + diff_cols + transform_cols + target_col]
     clean_df = filter_df.dropna(how="all")
 
     logger.info("Completed cleaning data!")
+    logger.info(clean_df.head())
     return clean_df
 ```
 
 
 ```python
-def feature_computation(clean_data: pd.DataFrame) -> (pd.DataFrame, pd.Series, pd.DataFrame, pd.Series):
+def feature_computation(
+    clean_data: pd.DataFrame, train_from: str, train_to: str, logger
+) -> (pd.DataFrame, pd.Series, pd.DataFrame, pd.Series):
     """
     Split data into train and test features set, aggregate the data into historical behavior for those cols needed.
     It also joins it with already calculated features, and extract the needed target from 2 months ahead.
@@ -1379,7 +1740,7 @@ def feature_computation(clean_data: pd.DataFrame) -> (pd.DataFrame, pd.Series, p
         clean_data: The cleaned dataset with customer, month, and payment information.
         train_from: The starting date of the training period.
         train_to: The ending date of the training period.
-    
+
     Returns:
         DataFrame: Pandas DataFrame with computed features for model training.
         DataFrame: Pandas DataFrame representing the target variable for train set.
@@ -1387,50 +1748,94 @@ def feature_computation(clean_data: pd.DataFrame) -> (pd.DataFrame, pd.Series, p
         DataFrame: Pandas DataFrame representing the target variable for test set.
     """
     logger.info("Starting feature computation")
+    # user-info cols to aggregate data later on
+    users_cols = ["customer_id", "MONTH", "YEAR"]
 
-    #TO-DO: Catch exceptions
+    # pre-cooked features
+    diff_cols = [
+        "dif_pago_final_prev_month",
+        "dif_pago_final_prev_2_month",
+        "dif_pago_final_prev_3_month",
+        "dif_consumo_prev_month",
+        "dif_consumo_prev_2_month",
+        "dif_consumo_prev_3_month",
+        "dif_discount_prev_month",
+        "dif_discount_prev_2_month",
+        "dif_discount_prev_3_month",
+    ]
+    # to-be-cooked features
+    transform_cols = ["pago_final_0"]
+
+    # target
+    target_col = ["NUM_DAYS_LINE_TYPE_FIXE_POST_DEA"]
+
+    # TO-DO: Catch exceptions
     # TO-DO: Potential unit tests validating same length for features/targets
+    # TO-DO: Test should be 1 month in advance, not 2!
+    # TO-DO: Instead of defining the cols every time import them somewhere else (they're need in data_cleaning also)
+    # Isolate the feature computation from the target comput. in 2 diff functions
 
     # Convert the train_from and train_to to datetime
     train_from_dt = pd.to_datetime(train_from)
     train_to_dt = pd.to_datetime(train_to)
-    
+
     # Filter train and test data before feature computation
     test_from_dt = train_from_dt + pd.DateOffset(months=2)
     test_to_dt = train_to_dt + pd.DateOffset(months=2)
     target_train_month = train_to_dt + pd.DateOffset(months=2)
     target_test_month = target_train_month + pd.DateOffset(months=2)
 
-    logger.info(f"Train computation from {train_from_dt} to {train_to_dt}. Target for {target_train_month}")
-    logger.info(f"Test computation from {test_from_dt} to {test_to_dt}. Target for {target_test_month}")
+    # Code suggested
+    """train_df, train_df_target, test_df, test_df_target= split_train_test(train_from,train_to)
+    train_df_features = compute_features(train_df)
+    test_df_features = compute_features(test_df)"""
+
+    logger.info(
+        f"Train computation from {train_from_dt} to {train_to_dt}. Target for {target_train_month}"
+    )
+    logger.info(
+        f"Test computation from {test_from_dt} to {test_to_dt}. Target for {target_test_month}"
+    )
 
     # Create date col to mix month and year
-    clean_data['date'] = pd.to_datetime(clean_data['YEAR'].astype(str) + '-' + clean_data['MONTH'].astype(str) + '-01')
+    clean_data["date"] = pd.to_datetime(
+        clean_data["YEAR"].astype(str) + "-" + clean_data["MONTH"].astype(str) + "-01"
+    )
 
     # Filter compute_data for the specific cols and date intervals. Also sort i.
-    compute_data = clean_data[['date'] + users_cols + transform_cols + diff_cols]
-    compute_data = compute_data[(compute_data['date'] >= train_from_dt) & (compute_data['date'] <= test_to_dt)]
+    compute_data = clean_data[["date"] + users_cols + transform_cols + diff_cols]
+    compute_data = compute_data[
+        (compute_data["date"] >= train_from_dt) & (compute_data["date"] <= test_to_dt)
+    ]
 
     # Perform feature computations for the combined dataset. Assigns nans if needed.
-    compute_data = compute_data.sort_values(by=['customer_id', 'date'])
-    compute_data['pago_final_prev_month'] = compute_data.groupby('customer_id')['pago_final_0'].shift(1)
-    compute_data['pago_final_prev_month'] = compute_data['pago_final_prev_month'].fillna(0)
-    compute_data['pago_final_avg_3_months'] = compute_data.groupby('customer_id')['pago_final_0'].transform(
-        lambda x: x.rolling(window=3, min_periods=1).mean()
-    )
+    compute_data = compute_data.sort_values(by=["customer_id", "date"])
+    compute_data["pago_final_prev_month"] = compute_data.groupby("customer_id")[
+        "pago_final_0"
+    ].shift(1)
+    compute_data["pago_final_prev_month"] = compute_data[
+        "pago_final_prev_month"
+    ].fillna(0)
+    compute_data["pago_final_avg_3_months"] = compute_data.groupby("customer_id")[
+        "pago_final_0"
+    ].transform(lambda x: x.rolling(window=3, min_periods=1).mean())
     logger.info("Features computed")
- 
+
     # Split the combined dataset into training and testing sets
-    features_train = compute_data[compute_data['date'] == train_to_dt]
-    features_test = compute_data[(compute_data['date'] == test_to_dt)]
+    features_train = compute_data[compute_data["date"] == train_to_dt]
+    features_test = compute_data[(compute_data["date"] == test_to_dt)]
 
     # Select only the most recent month's data per customer
-    #final_features_train = features_train.groupby('customer_id').tail(1)
-    #final_features_test = features_test.groupby('customer_id').tail(1)
+    # final_features_train = features_train.groupby('customer_id').tail(1)
+    # final_features_test = features_test.groupby('customer_id').tail(1)
 
     # Extract the target for the training and testing sets
-    target_train = clean_data[clean_data['date'] == target_train_month][['customer_id'] + target_col]
-    target_test = clean_data[clean_data['date'] == target_test_month][['customer_id'] + target_col]
+    target_train = clean_data[clean_data["date"] == target_train_month][
+        ["customer_id"] + target_col
+    ]
+    target_test = clean_data[clean_data["date"] == target_test_month][
+        ["customer_id"] + target_col
+    ]
 
     for target_df in [target_train, target_test]:
         for col in target_col:
@@ -1439,13 +1844,21 @@ def feature_computation(clean_data: pd.DataFrame) -> (pd.DataFrame, pd.Series, p
 
     # Now we need to join it with customer_id from features df
     # Check: i'm using an inner join because there are some edge cases to clarify (e.g. customer_id = 1322985)
-    features_and_target_train = features_train.merge(target_train, on='customer_id', how='inner')
-    features_and_target_test = features_test.merge(target_test, on='customer_id', how='inner')
+    features_and_target_train = features_train.merge(
+        target_train, on="customer_id", how="inner"
+    )
+    features_and_target_test = features_test.merge(
+        target_test, on="customer_id", how="inner"
+    )
 
-    #Split train and test features + target (squeeze into 1D array)
-    features = features_and_target_train.drop(columns=target_col + users_cols + ['date'])
+    # Split train and test features + target (squeeze into 1D array)
+    features = features_and_target_train.drop(
+        columns=target_col + users_cols + ["date"]
+    )
     target = features_and_target_train[target_col].squeeze()
-    features_test = features_and_target_test.drop(columns=target_col + users_cols + ['date'])
+    features_test = features_and_target_test.drop(
+        columns=target_col + users_cols + ["date"]
+    )
     target_test = features_and_target_test[target_col].squeeze()
 
     logger.info(f"Features: {features.columns.tolist()}")
@@ -1453,14 +1866,25 @@ def feature_computation(clean_data: pd.DataFrame) -> (pd.DataFrame, pd.Series, p
     logger.info("Completed feature computation!")
 
     return features, target, features_test, target_test
-
 ```
+
+Note about the target! copying comment from PR:
+
+that's a good point. I give a thought while doing that and potentially we need to evalute if we want the model to learn if a user churned in month n+1 although it is not our target. 3 possibilities
+
+- We somehow consider him because the reasons that forced him to churn in month n+1 are very similar to the ones that would make another user to churn in month n+2. Cons: we are giving a prediction for users in n+2 which have high probability to have churned in n+1 (hence prediction totally invalid for this group of customers, we targeted users no longer active)
+- We don't consider them and we just focus on features that will determine churn in month n+2. By doing so, we don't mix the prediction for users that might churn in month n+1 vs n+2. Cons: we don't capture the last movements from users behaviour and let the model learn from that pattern.
+- Users that churned in month n+1 will be deleted from the database (middle point between the first 2 scenarios)
+
+I'd say there is a trade-off between giving a prediction for high-probability users yet risking they will be no longer with us for that month vs. not capturing last moment churns but making sure we just focus on more future churns. Probably the 2nd is the worst (currently implemented 🎁)
 
 
 ```python
-def modeling(features: pd.DataFrame, target: pd.Series) -> Pipeline:
+def modeling(
+    features: pd.DataFrame, target: pd.Series, logistic_regression_params, logger
+) -> Pipeline:
     """
-    Prepares a machine learning pipeline that scales features and trains a logistic regression model 
+    Prepares a machine learning pipeline that scales features and trains a logistic regression model
     with processed data to predict churn.
 
     Args:
@@ -1472,19 +1896,24 @@ def modeling(features: pd.DataFrame, target: pd.Series) -> Pipeline:
     """
 
     logger.info("Starting Modeling")
-    
+
     # Directly use the logistic_regression_params global variable
     logger.info("Building model pipeline")
-    pipeline = Pipeline([
-        ('scaler', StandardScaler()),
-        ('logistic_regression', LogisticRegression(
-            penalty=logistic_regression_params['penalty'],
-            C=logistic_regression_params['C'],
-            solver=logistic_regression_params['solver'],
-            max_iter=logistic_regression_params['max_iter'],
-            random_state=42
-        ))
-    ])
+    pipeline = Pipeline(
+        [
+            ("scaler", StandardScaler()),
+            (
+                "logistic_regression",
+                LogisticRegression(
+                    penalty=logistic_regression_params["penalty"],
+                    C=logistic_regression_params["C"],
+                    solver=logistic_regression_params["solver"],
+                    max_iter=logistic_regression_params["max_iter"],
+                    random_state=42,
+                ),
+            ),
+        ]
+    )
 
     logger.info("Training model")
     model = pipeline.fit(features, target)
@@ -1496,7 +1925,21 @@ def modeling(features: pd.DataFrame, target: pd.Series) -> Pipeline:
 
 
 ```python
-def evaluation(model: LogisticRegression, features_test: pd.DataFrame, target_test: pd.Series) -> dict[str, str]:
+import pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import precision_recall_curve, roc_curve, auc
+import matplotlib.pyplot as plt
+from datetime import datetime
+import os
+
+
+def evaluation(
+    model: LogisticRegression,
+    features_test: pd.DataFrame,
+    target_test: pd.Series,
+    logger,
+    save_curves_path,
+) -> dict[str, str]:
     """
     Assesses trained model's performance using a test dataset and computes metrics like accuracy, precision, recall, and ROC-AUC.
 
@@ -1504,36 +1947,93 @@ def evaluation(model: LogisticRegression, features_test: pd.DataFrame, target_te
         dict: Dictionary with key performance metrics of the model.
     """
     logger.info(f"Started evaluation for {model}")
-    preds = model.predict_proba(features_test)[:, 1]    
-    
+    preds = model.predict_proba(features_test)[:, 1]
+
     # Plotting
     logger.info("Generating plots")
 
-    generate_evaluation_curves(model, preds, target_test, )
-    
+    generate_evaluation_curves(
+        model,
+        preds,
+        target_test,
+        save_curves_path,
+    )
+
     preds = model.predict_proba(features_test)
     precision, recall, _ = precision_recall_curve(target_test, preds[:, 1])
     model_metrics = {
         "Precision Curve": precision,
         "Recall Curve": recall,
-        #"ROC AUC": roc_auc
+        # "ROC AUC": roc_auc
     }
 
     # Calculate Precision in the First Decile
-    precision_decile = calculate_precision_first_decile(target_test, model.predict_proba(features_test)[:, 1])
+    precision_decile = calculate_precision_first_decile(
+        target_test, model.predict_proba(features_test)[:, 1]
+    )
     logger.info(f"Precision in the first decile: {precision_decile:.2f}")
 
     # Calculate Uplift for Each Decile
-    uplift_by_decile = calculate_uplift(target_test, model.predict_proba(features_test)[:, 1])
+    uplift_by_decile = calculate_uplift(
+        target_test, model.predict_proba(features_test)[:, 1]
+    )
     logger.info("Uplift by decile:")
     logger.info(uplift_by_decile)
 
     logger.info("Completed evaluation!")
-    return model_metrics, precision_decile, uplift_by_decile
-```
+
+    feature_importance_lr = get_feature_importance_logistic_regression(
+        model, features_test
+    )
+
+    logger.info("Feature importance")
+    logger.info(feature_importance_lr.head(10))
+
+    return model_metrics, precision_decile, uplift_by_decile, feature_importance_lr
 
 
-```python
+def calculate_precision_first_decile(target, y_pred_proba):
+    """
+    Calculate the precision in the first decile of predictions.
+
+    Args:
+    - y_true (array-like): True labels.
+    - y_pred_proba (array-like): Predicted probabilities.
+
+    Returns:
+    - precision_decile (float): Precision in the first decile.
+    """
+    data = pd.DataFrame({"y_true": target, "y_pred_proba": y_pred_proba})
+    data_sorted = data.sort_values(by="y_pred_proba", ascending=False)
+    decile_cutoff = int(len(data_sorted) * 0.1)
+    first_decile = data_sorted.head(decile_cutoff)
+    true_positives = first_decile["y_true"].sum()
+    precision_decile = true_positives / decile_cutoff
+
+    return precision_decile
+
+
+def calculate_uplift(target, y_pred_proba):
+    """
+    Calculate the uplift for each decile.
+
+    Args:
+    - y_true (array-like): True labels.
+    - y_pred_proba (array-like): Predicted probabilities.
+
+    Returns:
+    - pd.Series: Uplift for each decile.
+    """
+    data = pd.DataFrame({"y_true": target, "y_pred_proba": y_pred_proba})
+    data_sorted = data.sort_values(by="y_pred_proba", ascending=False)
+    data_sorted["decile"] = pd.qcut(data_sorted["y_pred_proba"], 10, labels=False)
+    decile_churn_rate = data_sorted.groupby("decile")["y_true"].mean()
+    overall_churn_rate = data["y_true"].mean()
+    uplift = decile_churn_rate / overall_churn_rate
+
+    return uplift
+
+
 def generate_evaluation_curves(
     model: str, y_pred, y_test, save_curves_path: str = None
 ):
@@ -1553,7 +2053,7 @@ def generate_evaluation_curves(
     """
 
     # Create a timestamp for unique filenames
-    #timestamp = datetime.now().strftime("%Y_%m_%d")
+    timestamp = datetime.now().strftime("%Y_%m_%d")
     model_type = type(model[-1]).__name__  # Assuming 'model' is your pipeline
 
     # ROC Curve
@@ -1595,67 +2095,166 @@ def generate_evaluation_curves(
         plt.savefig(figure_path)
 
     plt.show()
+
+
+def get_feature_importance_logistic_regression(model, features):
+    """
+    Get feature importance for Logistic Regression model.
+
+    Args:
+    - model: Trained Logistic Regression model.
+    - feature_names (list or array-like): List of feature names.
+
+    Returns:
+    - pd.DataFrame: DataFrame containing feature names and their corresponding coefficients.
+    """
+    feature_names = features.columns
+    # Extract coefficients
+    lr_model = model.named_steps["logistic_regression"]
+    coefficients = lr_model.coef_[0]  # for Logistic Regression
+
+    # Create a DataFrame for easy visualization
+    feature_importance = pd.DataFrame(
+        {"Feature": feature_names, "Coefficient": coefficients}
+    )
+
+    # Sort by absolute value of coefficients in descending order
+    feature_importance = feature_importance.reindex(
+        feature_importance.Coefficient.abs().sort_values(ascending=False).index
+    )
+
+    return feature_importance
 ```
 
 
 ```python
-def calculate_precision_first_decile(target, y_pred_proba):
-    """
-    Calculate the precision in the first decile of predictions.
-
-    Args:
-    - y_true (array-like): True labels.
-    - y_pred_proba (array-like): Predicted probabilities.
-
-    Returns:
-    - precision_decile (float): Precision in the first decile.
-    """
-    data = pd.DataFrame({'y_true': target, 'y_pred_proba': y_pred_proba})
-    data_sorted = data.sort_values(by='y_pred_proba', ascending=False)
-    decile_cutoff = int(len(data_sorted) * 0.1)
-    first_decile = data_sorted.head(decile_cutoff)
-    true_positives = first_decile['y_true'].sum()
-    precision_decile = true_positives / decile_cutoff
-
-    return precision_decile
-```
-
-
-```python
-def calculate_uplift(target, y_pred_proba):
-    """
-    Calculate the uplift for each decile.
-
-    Args:
-    - y_true (array-like): True labels.
-    - y_pred_proba (array-like): Predicted probabilities.
-
-    Returns:
-    - pd.Series: Uplift for each decile.
-    """
-    data = pd.DataFrame({'y_true': target, 'y_pred_proba': y_pred_proba})
-    data_sorted = data.sort_values(by='y_pred_proba', ascending=False)
-    data_sorted['decile'] = pd.qcut(data_sorted['y_pred_proba'], 10, labels=False)
-    decile_churn_rate = data_sorted.groupby('decile')['y_true'].mean()
-    overall_churn_rate = data['y_true'].mean()
-    uplift = decile_churn_rate / overall_churn_rate
-
-    return uplift
+query = """
+WITH selectable_customer AS
+(
+        SELECT   customer_id
+        FROM     `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp2022`
+        GROUP BY customer_id ), customer_selected AS
+(
+    SELECT customer_id AS selected_customer
+    FROM   selectable_customer
+    WHERE  RAND() < 0.1 )
+SELECT     customer_id,
+        MONTH,
+        YEAR,
+        pago_final_0,
+        dif_pago_final_prev_month,
+        dif_pago_final_prev_2_month,
+        dif_pago_final_prev_3_month,
+        periodica_0,
+        dif_periodica_prev_month,
+        dif_periodica_prev_2_month,
+        dif_periodica_prev_3_month,
+        consumo_0,
+        dif_consumo_prev_month,
+        dif_consumo_prev_2_month,
+        dif_consumo_prev_3_month,
+        aperiodica_0,
+        dif_aperiodica_prev_month,
+        dif_aperiodica_prev_2_month,
+        dif_aperiodica_prev_3_month,
+        discount_0,
+        dif_discount_prev_month,
+        dif_discount_prev_2_month,
+        dif_discount_prev_3_month,
+        ajuste_0,
+        dif_ajuste_prev_month,
+        dif_ajuste_prev_2_month,
+        dif_ajuste_prev_3_month,
+        Tota_Compra_disp,
+        Curr_Compra_disp,
+        Curr_Compra_Finanz_disp,
+        Curr_Finanz_disp,
+        Month_purchase_disp,
+        Modelo_disp,
+        Import_Rest_quota_disp,
+        pvp_total_disp,
+        pvp_total_disp_movil,
+        Curr_cancel_disp,
+        Tota_cancel_disp NUM_GB_OWNN_CURR,
+        NUM_GB_2G_CURR,
+        NUM_GB_3G_CURR,
+        NUM_GB_4G_CURR,
+        NUM_GB_5G_CURR,
+        NUM_SESS_CURR,
+        NUM_SECS_CURR,
+        NUM_CALL_CURR,
+        NUM_CALL_WEEK_CURR,
+        NUM_CALL_WEEKEND_CURR,
+        NUM_SECS_WEEK_CURR,
+        NUM_SECS_WEEKEND_CURR,
+        NUM_CALL_WEEK,
+        NUM_CALL_WEEKEND,
+        NUM_DAYS_LINE_TYPE_FIXE_POST_DEA
+FROM       `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp2022`
+INNER JOIN customer_selected
+ON         customer_id = selected_customer
+WHERE      IS_CUST_SEGM_RESI > 0
+AND        IS_CUST_BILL_POST_CURR = TRUE
+AND        CUST_BUNDLE_CURR = 'FMC'
+AND        NUM_IMPAGOS = 0
+AND        pago_final_0 IS NOT NULL
+"""
+# TO-DO: PARAMETRIZE THIS
+save_curves_path = "src/models"
 ```
 
 
 ```python
 get_initial_params()
-logger.info(f"Train from {train_from} to {train_to}")
-clean_data = data_cleaning(sample)
-features, target, features_test, target_test = feature_computation(clean_data)
-model = modeling(features, target)
-model_metrics, precision_decile, uplift_by_decile = evaluation(model, features, target)
+raw_data = data_gathering(query, logger)
+clean_data = data_cleaning(raw_data, logger)
+features, target, features_test, target_test = feature_computation(
+    clean_data, train_from, train_to, logger
+)
+model = modeling(features, target, logistic_regression_params, logger)
+model_metrics, precision_decile, uplift_by_decile, feature_importance = evaluation(
+    model, features, target, logger, save_curves_path
+)
 ```
 
-    INFO - Train from 2022-01-01 to 2022-06-01
+    INFO - Started querying data
+    INFO - Data succesfully retrieved! Length: 285136
     INFO - Starting cleaning data
     INFO - Completed cleaning data!
+    INFO -   customer_id MONTH  YEAR  dif_pago_final_prev_month  \
+    0      787979    01  2022                       0.00   
+    1       18921    11  2022                      22.04   
+    2     4144085    01  2022                       7.68   
+    3     3504421    08  2022                      -0.30   
+    4      949537    07  2022                      -0.14   
+    
+       dif_pago_final_prev_2_month  dif_pago_final_prev_3_month  \
+    0                       -18.52                       -42.06   
+    1                        21.32                        22.04   
+    2                         7.68                         6.65   
+    3                        -3.95                       -10.98   
+    4                         0.00                         0.00   
+    
+       dif_consumo_prev_month  dif_consumo_prev_2_month  dif_consumo_prev_3_month  \
+    0                  -20.04                    -29.47                    -40.54   
+    1                   13.72                     23.16                    -29.15   
+    2                  -32.28                   1035.05                   1408.77   
+    3                  -24.80                   -109.16                    -89.00   
+    4                   -8.56                     -5.32                      0.53   
+    
+       dif_discount_prev_month  dif_discount_prev_2_month  \
+    0                    19.44                      29.47   
+    1                     8.32                      -1.84   
+    2                    39.95                   -1027.38   
+    3                    24.50                     104.36   
+    4                     8.42                       5.32   
+    
+       dif_discount_prev_3_month  pago_final_0  NUM_DAYS_LINE_TYPE_FIXE_POST_DEA  
+    0                      39.48       50.0000                              <NA>  
+    1                      51.19       93.6938                              <NA>  
+    2                   -1402.12       53.6959                              <NA>  
+    3                      77.15       72.4720                              <NA>  
+    4                      -0.53       32.0900                              <NA>  
     INFO - Starting feature computation
     INFO - Train computation from 2022-01-01 00:00:00 to 2022-06-01 00:00:00. Target for 2022-08-01 00:00:00
     INFO - Test computation from 2022-03-01 00:00:00 to 2022-08-01 00:00:00. Target for 2022-10-01 00:00:00
@@ -1676,146 +2275,35 @@ model_metrics, precision_decile, uplift_by_decile = evaluation(model, features, 
 
 
     
-![png](explore_data_files/explore_data_41_1.png)
+![png](explore_data_files/explore_data_43_1.png)
     
 
 
-    INFO - Precision in the first decile: 0.04
+    INFO - Precision in the first decile: 0.05
     INFO - Uplift by decile:
     INFO - decile
-    0    0.553644
-    1    0.687860
-    2    0.754969
-    3    0.755293
-    4    0.738192
-    5    1.006625
-    6    1.258821
-    7    1.392498
-    8    1.140842
-    9    1.711263
+    0    0.699606
+    1    0.622137
+    2    0.731011
+    3    0.699904
+    4    0.886545
+    5    1.042080
+    6    1.026526
+    7    1.042080
+    8    1.539789
+    9    1.710147
     Name: y_true, dtype: float64
     INFO - Completed evaluation!
+    INFO - Feature importance
+    INFO -                         Feature  Coefficient
+    8     dif_discount_prev_2_month    -0.245966
+    10        pago_final_prev_month     0.205532
+    7       dif_discount_prev_month     0.128455
+    0                  pago_final_0     0.115234
+    5      dif_consumo_prev_2_month    -0.111665
+    9     dif_discount_prev_3_month     0.090025
+    6      dif_consumo_prev_3_month     0.085891
+    11      pago_final_avg_3_months    -0.079281
+    3   dif_pago_final_prev_3_month     0.069407
+    1     dif_pago_final_prev_month     0.051164
 
-
-
-```python
-
-def get_feature_importance_logistic_regression(model, feature_names):
-    """
-    Get feature importance for Logistic Regression model.
-
-    Args:
-    - model: Trained Logistic Regression model.
-    - feature_names (list or array-like): List of feature names.
-
-    Returns:
-    - pd.DataFrame: DataFrame containing feature names and their corresponding coefficients.
-    """
-    feature_names = features.columns
-    # Extract coefficients
-    lr_model = model.named_steps['logistic_regression']
-    coefficients = lr_model.coef_[0]  # for Logistic Regression
-
-    # Create a DataFrame for easy visualization
-    feature_importance = pd.DataFrame({
-        'Feature': feature_names,
-        'Coefficient': coefficients
-    })
-
-    # Sort by absolute value of coefficients in descending order
-    feature_importance = feature_importance.reindex(feature_importance.Coefficient.abs().sort_values(ascending=False).index)
-
-    return feature_importance
-
-# Example usage
-# Assuming 'feature_names' is a list of your feature names
-feature_importance_lr = get_feature_importance_logistic_regression(model, features)
-feature_importance_lr.head(10)
-```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>Feature</th>
-      <th>Coefficient</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>8</th>
-      <td>dif_discount_prev_2_month</td>
-      <td>-0.403543</td>
-    </tr>
-    <tr>
-      <th>5</th>
-      <td>dif_consumo_prev_2_month</td>
-      <td>-0.364464</td>
-    </tr>
-    <tr>
-      <th>7</th>
-      <td>dif_discount_prev_month</td>
-      <td>0.248656</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>dif_consumo_prev_month</td>
-      <td>0.141422</td>
-    </tr>
-    <tr>
-      <th>9</th>
-      <td>dif_discount_prev_3_month</td>
-      <td>-0.117019</td>
-    </tr>
-    <tr>
-      <th>0</th>
-      <td>pago_final_0</td>
-      <td>0.093403</td>
-    </tr>
-    <tr>
-      <th>10</th>
-      <td>pago_final_prev_month</td>
-      <td>0.088020</td>
-    </tr>
-    <tr>
-      <th>11</th>
-      <td>pago_final_avg_3_months</td>
-      <td>0.084572</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>dif_pago_final_prev_month</td>
-      <td>0.052332</td>
-    </tr>
-    <tr>
-      <th>6</th>
-      <td>dif_consumo_prev_3_month</td>
-      <td>0.018606</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
-
-
-```python
-
-```

@@ -5,7 +5,6 @@ from google.oauth2 import service_account
 from google.cloud import bigquery_storage_v1
 
 
-
 class BigqueryService:
     """
     A class to represent the Bigquery Client
@@ -29,7 +28,9 @@ class BigqueryService:
         )
 
         self.client = bigquery.Client(credentials=bq_credentials)
-        self.bqstorageclient = bigquery_storage_v1.BigQueryReadClient(credentials=bq_credentials)
+        self.bqstorageclient = bigquery_storage_v1.BigQueryReadClient(
+            credentials=bq_credentials
+        )
 
         # TODO: Catch file errors and BigQuery exceptions
 
@@ -44,4 +45,6 @@ class BigqueryService:
         query_job = self.client.query(query)
 
         # Use BigQuery Storage API
-        return query_job.result().to_dataframe(create_bqstorage_client=self.bqstorageclient)
+        return query_job.result().to_dataframe(
+            create_bqstorage_client=self.bqstorageclient
+        )
