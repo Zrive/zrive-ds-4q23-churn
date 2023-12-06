@@ -1,16 +1,47 @@
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
 
-def modeling(features: pd.DataFrame, target: pd.DataFrame) -> LogisticRegression:
+
+def modeling(
+    features: pd.DataFrame, target: pd.Series, logistic_regression_params, logger
+) -> Pipeline:
     """
-    Selects a machine learning algorithm, trains the model with processed data,
-    and learns patterns for churn prediction.
+    Prepares a machine learning pipeline that scales features and trains a logistic regression model
+    with processed data to predict churn.
+
+    Args:
+        features (pd.DataFrame): The features to train the model on.
+        target (pd.Series): The target variable to predict.
 
     Returns:
-        Model: Trained machine learning model for churn prediction.
+        Pipeline: A pipeline with a standard scaler and a trained logistic regression model.
     """
 
-    model = LogisticRegression(penalty="l1", C=1, solver="saga")
-    model.fit(features, target)
+    logger.info("Starting Modeling")
+
+    # Directly use the logistic_regression_params global variable
+    logger.info("Building model pipeline")
+    pipeline = Pipeline(
+        [
+            ("scaler", StandardScaler()),
+            (
+                "logistic_regression",
+                LogisticRegression(
+                    penalty=logistic_regression_params["penalty"],
+                    C=logistic_regression_params["C"],
+                    solver=logistic_regression_params["solver"],
+                    max_iter=logistic_regression_params["max_iter"],
+                    random_state=42,
+                ),
+            ),
+        ]
+    )
+
+    logger.info("Training model")
+    model = pipeline.fit(features, target)
+
+    logger.info("Completed model training!")
 
     return model
