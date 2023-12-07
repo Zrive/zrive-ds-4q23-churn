@@ -90,14 +90,22 @@ def feature_computation(
     # final_features_train = features_train.groupby('customer_id').tail(1)
     # final_features_test = features_test.groupby('customer_id').tail(1)
 
-    # Now we need to join it with customer_id from features df
-    # Check: i'm using an inner join because there are some edge cases to clarify (e.g. customer_id = 1322985)
+    # As there are customer that leave between the month we use for training and the target month
+    # We have to join the features and the targets and drop those that don't have target
     features_and_target_train = train_df_features.merge(
-        train_df_target, on="customer_id", how="inner"
+        train_df_target, on="customer_id", how="left"
     )
     features_and_target_test = test_df_features.merge(
-        test_df_target, on="customer_id", how="inner"
+        test_df_target, on="customer_id", how="left"
     )
+
+    features_and_target_train = features_and_target_train[
+        features_and_target_train[target_col[0]].notna()
+    ]
+
+    features_and_target_test = features_and_target_test[
+        features_and_target_test[target_col[0]].notna()
+    ]
 
     # Split train and test features + target (squeeze into 1D array)
     features = features_and_target_train.drop(
@@ -212,10 +220,31 @@ def compute_target(
     Returns:
         DataFrame: Pandas DataFrame with the customer_id and the target computed.
     """
-    target_df = df[df["date"] == target_month][["customer_id"] + target_col]
+
+    drop_churn_between_month = target_month + pd.DateOffset(months=-1)
+
+    target_df = df[
+        (df["date"] == target_month) | (df["date"] == drop_churn_between_month)
+    ][["customer_id"] + target_col + ["date"]]
 
     for col in target_col:
         target_df[col].fillna(0, inplace=True)
-        target_df[col] = np.where(target_df[col] > 0, 1, 0)
+        target_df[col] = np.where(
+            ((target_df[col] > 0) & (target_df["date"] == target_month)),
+            1,
+            target_df[col],
+        )
+        target_df[col] = np.where(
+            ((target_df[col] > 0) & (target_df["date"] == drop_churn_between_month)),
+            2,
+            target_df[col],
+        )
+
+    target_df = target_df[
+        (target_df["NUM_DAYS_LINE_TYPE_FIXE_POST_DEA"] != 2)
+        & (target_df["date"] != drop_churn_between_month)
+    ][["customer_id"] + target_col]
+
+    target_df[target_col] = target_df[target_col].astype("int")
 
     return target_df
