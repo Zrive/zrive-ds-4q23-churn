@@ -139,7 +139,7 @@ def main_orchestrator():
     )
     model = modeling(features, target, logistic_regression_params, logger)
     model_metrics, precision_decile, uplift_by_decile, feature_importance = evaluation(
-        model, features, target, logger, save_curves_path
+        model, features_test, target_test, logger, save_curves_path
     )
 
 

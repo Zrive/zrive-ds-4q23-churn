@@ -26,7 +26,13 @@ def data_cleaning(raw_df: pd.DataFrame, logger) -> pd.DataFrame:
     ]
 
     # to-be-cooked features
-    transform_cols = ["pago_final_0"]
+    transform_cols = [
+        "pago_final_0",
+        "consumo_0",
+        "aperiodica_0",
+        "discount_0",
+        "ajuste_0",
+    ]
 
     # target
     target_col = ["NUM_DAYS_LINE_TYPE_FIXE_POST_DEA"]
