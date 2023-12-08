@@ -15,9 +15,9 @@ def feature_computation(
 
     Returns:
         DataFrame: Pandas DataFrame with computed features for model training.
-        DataFrame: Pandas DataFrame representing the target variable for train set.
+        Series: Pandas Series representing the target variable for train set.
         DataFrame: Pandas DataFrame with computed features for model testing.
-        DataFrame: Pandas DataFrame representing the target variable for test set.
+        Series: Pandas Series representing the target variable for test set.
     """
     logger.info("Starting feature computation")
     # user-info cols to aggregate data later on
@@ -49,9 +49,7 @@ def feature_computation(
 
     # TO-DO: Catch exceptions
     # TO-DO: Potential unit tests validating same length for features/targets
-    # TO-DO: Test should be 1 month in advance, not 2!
     # TO-DO: Instead of defining the cols every time import them somewhere else (they're need in data_cleaning also)
-    # Isolate the feature computation from the target comput. in 2 diff functions
 
     # Convert the train_from and train_to to datetime
     train_from_dt = pd.to_datetime(train_from)
@@ -79,19 +77,20 @@ def feature_computation(
 
     logger.info("Starting features and target computation")
 
-    train_df_features = compute_features(train_df, target_col)
-    test_df_features = compute_features(test_df, target_col)
-    train_df_target = compute_target(compute_ready_data, target_col, target_train_month)
-    test_df_target = compute_target(compute_ready_data, target_col, target_test_month)
+    train_df_features = compute_features(train_df, target_col, train_to_dt)
+    test_df_features = compute_features(test_df, target_col, test_to_dt)
+    train_df_target = compute_target(
+        compute_ready_data, target_col, target_train_month, False
+    )
+    test_df_target = compute_target(
+        compute_ready_data, target_col, target_test_month, False
+    )
 
     logger.info("Features computed")
 
-    # Select only the most recent month's data per customer
-    # final_features_train = features_train.groupby('customer_id').tail(1)
-    # final_features_test = features_test.groupby('customer_id').tail(1)
-
     # As there are customer that leave between the month we use for training and the target month
-    # We have to join the features and the targets and drop those that don't have target
+    # We have to join the features and the targets and drop those that don't have target. By doing this,
+    # we exclude customer that churned in gap month or those with no corresponding record in the target dataset.
     features_and_target_train = train_df_features.merge(
         train_df_target, on="customer_id", how="left"
     )
@@ -152,13 +151,15 @@ def split_train_test(
     # Filter compute_data for the specific date intervals.
     df = df[(df["date"] >= train_from) & (df["date"] <= test_to)]
 
-    features_train = df[df["date"] == train_to]
-    features_test = df[(df["date"] == test_to)]
+    train_df = df[(df["date"] >= train_from) & (df["date"] <= train_to)]
+    test_df = df[(df["date"] >= test_from) & (df["date"] <= test_to)]
 
-    return features_train, features_test
+    return train_df, test_df
 
 
-def compute_features(df: pd.DataFrame, target_col: list[str]) -> pd.DataFrame:
+def compute_features(
+    df: pd.DataFrame, target_col: list[str], train_to_dt: pd.Timestamp
+) -> pd.DataFrame:
     """
     Compute the features and adds them to the df.
     Args:
@@ -168,6 +169,10 @@ def compute_features(df: pd.DataFrame, target_col: list[str]) -> pd.DataFrame:
     Returns:
         DataFrame: Pandas DataFrame with new computed variables.
     """
+
+    # TO-DO: The rolling function is propagated backwards for each single month.
+    # we just need it for the last one (but for that we need past data also). Didn't find
+    # any option to do it with pandas
     df = df.drop(columns=target_col)
 
     df = df.sort_values(by=["customer_id", "date"])
@@ -183,6 +188,9 @@ def compute_features(df: pd.DataFrame, target_col: list[str]) -> pd.DataFrame:
     df["discount_avg_6_months"] = compute_x_months_avg(df, "discount_0", 6)
     df["ajuste_avg_3_months"] = compute_x_months_avg(df, "ajuste_0", 3)
     df["ajuste_avg_6_months"] = compute_x_months_avg(df, "ajuste_0", 6)
+
+    # Filter only the computation backwards from the last month
+    df = df[df["date"] == train_to_dt]
 
     return df
 
@@ -209,6 +217,7 @@ def compute_target(
     df: pd.DataFrame,
     target_col: str,
     target_month: pd.Series,
+    keep_gap_month_churns: bool = False,
 ) -> pd.DataFrame:
     """
     Compute the target column for a df.
@@ -216,12 +225,14 @@ def compute_target(
         df: The clean dataset with all the data.
         target_col: Name of the target column.
         target_month: The date where the target has to be computed.
-
+        keep_gap_month_churns: A boolean parameter that determines the treatment of churns occurring in the gap month.
+        If True, these churns are treated as actual churns (assigned a value of 1);
+        otherwise, they are excluded from the analysis. Defaults to False.
     Returns:
         DataFrame: Pandas DataFrame with the customer_id and the target computed.
     """
 
-    drop_churn_between_month = target_month + pd.DateOffset(months=-1)
+    drop_churn_between_month = target_month - pd.DateOffset(months=1)
 
     target_df = df[
         (df["date"] == target_month) | (df["date"] == drop_churn_between_month)
@@ -240,6 +251,11 @@ def compute_target(
             target_df[col],
         )
 
+    if keep_gap_month_churns:
+        # Convert all values that are 2 (gap month churns) into 1 (real churns)
+        target_df[col] = np.where(target_df[col] == 2, 1, target_df[col])
+
+    # Exclude the records that are still marked as 2 (gap month churns) if keep_gap_month_churns is False
     target_df = target_df[
         (target_df["NUM_DAYS_LINE_TYPE_FIXE_POST_DEA"] != 2)
         & (target_df["date"] != drop_churn_between_month)

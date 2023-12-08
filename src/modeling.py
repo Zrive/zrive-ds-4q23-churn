@@ -38,6 +38,22 @@ def modeling(
             ),
         ]
     )
+    """
+    pipeline = Pipeline(
+        [
+            (
+                "lightgbm",
+                lgb.LGBMClassifier(
+                    boosting_type=lightgbm_params["boosting_type"],
+                    num_leaves=lightgbm_params["num_leaves"],
+                    max_depth=lightgbm_params["max_depth"],
+                    learning_rate=lightgbm_params["learning_rate"],
+                    n_estimators=lightgbm_params["n_estimators"],
+                    random_state=42,
+                ),
+            ),
+        ]
+    )"""
 
     logger.info("Training model")
     model = pipeline.fit(features, target)

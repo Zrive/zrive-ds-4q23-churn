@@ -20,7 +20,7 @@ def get_initial_params():
         None: This function does not return a value but populates a global variable
         with necessary parameters.
     """
-    global train_from, train_to, logistic_regression_params
+    global train_from, train_to, logistic_regression_params, lightgbm_params
 
     config = configparser.ConfigParser()
     config.read("src/params.ini")
@@ -34,6 +34,15 @@ def get_initial_params():
         "C": config.getfloat("LOGISTIC_REGRESSION", "C", fallback=1.0),
         "solver": config.get("LOGISTIC_REGRESSION", "solver", fallback="saga"),
         "max_iter": config.getint("LOGISTIC_REGRESSION", "max_iter", fallback=10000),
+    }
+
+    # Load LightGBM parameters
+    lightgbm_params = {
+        "boosting_type": config.get("LIGHTGBM", "boosting_type", fallback="gbdt"),
+        "num_leaves": config.getint("LIGHTGBM", "num_leaves", fallback=31),
+        "max_depth": config.getint("LIGHTGBM", "max_depth", fallback=-1),
+        "learning_rate": config.getfloat("LIGHTGBM", "learning_rate", fallback=0.1),
+        "n_estimators": config.getint("LIGHTGBM", "n_estimators", fallback=100),
     }
 
 
