@@ -22,6 +22,7 @@ google-cloud-bigquery-storage = "^2.22.0"
 nbconvert = "^7.11.0"
 pandoc = "^2.3"
 datetime = "^5.3"
+lightgbm = "^4.1.0"
 
 [build-system]
 requires = ["poetry-core"]
