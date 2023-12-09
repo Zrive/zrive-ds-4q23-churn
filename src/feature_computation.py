@@ -109,6 +109,15 @@ def feature_computation(
     train_df, test_df = split_train_test(
         compute_ready_data, train_from_dt, train_to_dt, test_from_dt, test_to_dt
     )
+    
+    # Need to remove users that churned previously to train_to/test_to
+    previous_churned_users_train = train_df[(train_df['date'] <= train_to_dt) & (train_df[target_col[0]] > 0)]['customer_id'].unique()
+    previous_churned_users_test = test_df[(test_df['date'] <= test_to_dt) & (test_df[target_col[0]] > 0)]['customer_id'].unique()
+    train_df = train_df[~train_df['customer_id'].isin(previous_churned_users_train)]
+    test_df = test_df[~test_df['customer_id'].isin(previous_churned_users_test)]
+
+    logger.info(f"Removing {len(previous_churned_users_train)} previous churned users from train set")
+    logger.info(f"Removing {len(previous_churned_users_test)} previous churned users from test set")
 
     logger.info("Starting features and target computation")
 
