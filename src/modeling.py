@@ -2,10 +2,11 @@ import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
+import lightgbm as lgb
 
 
 def modeling(
-    features: pd.DataFrame, target: pd.Series, logistic_regression_params, logger
+    features: pd.DataFrame, target: pd.Series, lightgbm_params, logger
 ) -> Pipeline:
     """
     Prepares a machine learning pipeline that scales features and trains a logistic regression model
@@ -23,6 +24,7 @@ def modeling(
 
     # Directly use the logistic_regression_params global variable
     logger.info("Building model pipeline")
+    """
     pipeline = Pipeline(
         [
             ("scaler", StandardScaler()),
@@ -37,8 +39,7 @@ def modeling(
                 ),
             ),
         ]
-    )
-    """
+    )"""
     pipeline = Pipeline(
         [
             (
@@ -53,7 +54,7 @@ def modeling(
                 ),
             ),
         ]
-    )"""
+    )
 
     logger.info("Training model")
     model = pipeline.fit(features, target)

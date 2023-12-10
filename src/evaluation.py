@@ -7,7 +7,7 @@ import os
 
 
 def evaluation(
-    model: LogisticRegression,
+    model,
     features_test: pd.DataFrame,
     target_test: pd.Series,
     logger,
@@ -32,8 +32,7 @@ def evaluation(
         save_curves_path,
     )
 
-    preds = model.predict_proba(features_test)
-    precision, recall, _ = precision_recall_curve(target_test, preds[:, 1])
+    precision, recall, _ = precision_recall_curve(target_test, preds)
     model_metrics = {
         "Precision Curve": precision,
         "Recall Curve": recall,
@@ -42,13 +41,13 @@ def evaluation(
 
     # Calculate Precision in the First Decile
     precision_decile = calculate_precision_first_decile(
-        target_test, model.predict_proba(features_test)[:, 1]
+        target_test, preds
     )
     logger.info(f"Precision in the first decile: {precision_decile:.2f}")
 
     # Calculate Uplift for Each Decile
     uplift_by_decile = calculate_uplift(
-        target_test, model.predict_proba(features_test)[:, 1]
+        target_test, preds
     )
     logger.info("Uplift by decile:")
     logger.info(uplift_by_decile)
@@ -99,12 +98,14 @@ def calculate_uplift(target, y_pred_proba):
     """
     data = pd.DataFrame({"y_true": target, "y_pred_proba": y_pred_proba})
     data_sorted = data.sort_values(by="y_pred_proba", ascending=False)
-    data_sorted["decile"] = pd.qcut(data_sorted["y_pred_proba"], 10, labels=False)
+    data_sorted["decile"] = pd.qcut(data_sorted["y_pred_proba"], q=10, labels=list(reversed(range(10))))
     decile_churn_rate = data_sorted.groupby("decile")["y_true"].mean()
+    
     overall_churn_rate = data["y_true"].mean()
     uplift = decile_churn_rate / overall_churn_rate
 
-    return uplift
+    # return by ascending deciles
+    return uplift.sort_index(ascending=False)
 
 
 def generate_evaluation_curves(
@@ -197,3 +198,4 @@ def get_feature_importance_logistic_regression(model, features):
     )
 
     return feature_importance
+
