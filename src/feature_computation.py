@@ -118,9 +118,11 @@ def feature_computation(
 
     logger.info(f"Removing {len(previous_churned_users_train)} previous churned users from train set")
     logger.info(f"Removing {len(previous_churned_users_test)} previous churned users from test set")
+    logger.info(f"Unique customers in train: {train_df['customer_id'].nunique()}")
+    logger.info(f"Unique customers in test: {test_df['customer_id'].nunique()}")
 
     logger.info("Starting features and target computation")
-
+    
     train_df_features = compute_features(train_df, target_col, train_to_dt)
     test_df_features = compute_features(test_df, target_col, test_to_dt)
     train_df_target = compute_target(
@@ -130,6 +132,8 @@ def feature_computation(
         compute_ready_data, target_col, target_test_month, False
     )
 
+    logger.info(f"Length train data: {len(train_df_features)}")
+    logger.info(f"Length test data: {len(test_df_features)}")
     logger.info("Features computed")
 
     # As there are customer that leave between the month we use for training and the target month
