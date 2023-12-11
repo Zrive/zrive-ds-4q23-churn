@@ -3,7 +3,11 @@ import numpy as np
 
 
 def feature_computation(
-    clean_data: pd.DataFrame, train_from: str, train_to: str, logger
+    clean_data: pd.DataFrame,
+    train_from: str,
+    train_to: str,
+    logger,
+    keep_gap_month_churns: bool = False,
 ) -> (pd.DataFrame, pd.Series, pd.DataFrame, pd.Series):
     """
     Split data into train and test features set, aggregate the data into historical behavior for those cols needed.
@@ -109,27 +113,35 @@ def feature_computation(
     train_df, test_df = split_train_test(
         compute_ready_data, train_from_dt, train_to_dt, test_from_dt, test_to_dt
     )
-    
-    # Need to remove users that churned previously to train_to/test_to
-    previous_churned_users_train = train_df[(train_df['date'] <= train_to_dt) & (train_df[target_col[0]] > 0)]['customer_id'].unique()
-    previous_churned_users_test = test_df[(test_df['date'] <= test_to_dt) & (test_df[target_col[0]] > 0)]['customer_id'].unique()
-    train_df = train_df[~train_df['customer_id'].isin(previous_churned_users_train)]
-    test_df = test_df[~test_df['customer_id'].isin(previous_churned_users_test)]
 
-    logger.info(f"Removing {len(previous_churned_users_train)} previous churned users from train set")
-    logger.info(f"Removing {len(previous_churned_users_test)} previous churned users from test set")
+    # Need to remove users that churned previously to train_to/test_to
+    previous_churned_users_train = train_df[
+        (train_df["date"] <= train_to_dt) & (train_df[target_col[0]] > 0)
+    ]["customer_id"].unique()
+    previous_churned_users_test = test_df[
+        (test_df["date"] <= test_to_dt) & (test_df[target_col[0]] > 0)
+    ]["customer_id"].unique()
+    train_df = train_df[~train_df["customer_id"].isin(previous_churned_users_train)]
+    test_df = test_df[~test_df["customer_id"].isin(previous_churned_users_test)]
+
+    logger.info(
+        f"Removing {len(previous_churned_users_train)} previous churned users from train set"
+    )
+    logger.info(
+        f"Removing {len(previous_churned_users_test)} previous churned users from test set"
+    )
     logger.info(f"Unique customers in train: {train_df['customer_id'].nunique()}")
     logger.info(f"Unique customers in test: {test_df['customer_id'].nunique()}")
 
     logger.info("Starting features and target computation")
-    
+
     train_df_features = compute_features(train_df, target_col, train_to_dt)
     test_df_features = compute_features(test_df, target_col, test_to_dt)
     train_df_target = compute_target(
-        compute_ready_data, target_col, target_train_month, False
+        compute_ready_data, target_col, target_train_month, keep_gap_month_churns
     )
     test_df_target = compute_target(
-        compute_ready_data, target_col, target_test_month, False
+        compute_ready_data, target_col, target_test_month, keep_gap_month_churns
     )
 
     logger.info(f"Length train data: {len(train_df_features)}")

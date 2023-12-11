@@ -45,12 +45,14 @@ def modeling(
             (
                 "lightgbm",
                 lgb.LGBMClassifier(
-                    boosting_type=lightgbm_params["boosting_type"],
-                    num_leaves=lightgbm_params["num_leaves"],
-                    max_depth=lightgbm_params["max_depth"],
                     learning_rate=lightgbm_params["learning_rate"],
                     n_estimators=lightgbm_params["n_estimators"],
-                    random_state=42,
+                    num_leaves=lightgbm_params["num_leaves"],
+                    colsample_bytree=lightgbm_params["colsample_bytree"],
+                    subsample=lightgbm_params["subsample"],
+                    reg_alpha=lightgbm_params["reg_alpha"],
+                    reg_lambda=lightgbm_params["reg_lambda"],
+                    random_state=lightgbm_params["random_state"],
                 ),
             ),
         ]
