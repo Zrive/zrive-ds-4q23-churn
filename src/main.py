@@ -67,75 +67,97 @@ def main_orchestrator():
     """
 
     query = """
-    WITH selectable_customer AS
-    (
-            SELECT   customer_id
-            FROM     `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp2022`
-            GROUP BY customer_id ), customer_selected AS
-    (
+    WITH selectable_customer AS (
+        SELECT customer_id
+        FROM `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp2022`
+        GROUP BY customer_id
+    ), 
+
+    customer_selected AS (
         SELECT customer_id AS selected_customer
         FROM   selectable_customer
-        WHERE  RAND() < 0.1 )
-    SELECT     customer_id,
-            MONTH,
-            YEAR,
-            pago_final_0,
-            dif_pago_final_prev_month,
-            dif_pago_final_prev_2_month,
-            dif_pago_final_prev_3_month,
-            periodica_0,
-            dif_periodica_prev_month,
-            dif_periodica_prev_2_month,
-            dif_periodica_prev_3_month,
-            consumo_0,
-            dif_consumo_prev_month,
-            dif_consumo_prev_2_month,
-            dif_consumo_prev_3_month,
-            aperiodica_0,
-            dif_aperiodica_prev_month,
-            dif_aperiodica_prev_2_month,
-            dif_aperiodica_prev_3_month,
-            discount_0,
-            dif_discount_prev_month,
-            dif_discount_prev_2_month,
-            dif_discount_prev_3_month,
-            ajuste_0,
-            dif_ajuste_prev_month,
-            dif_ajuste_prev_2_month,
-            dif_ajuste_prev_3_month,
-            Tota_Compra_disp,
-            Curr_Compra_disp,
-            Curr_Compra_Finanz_disp,
-            Curr_Finanz_disp,
-            Month_purchase_disp,
-            Modelo_disp,
-            Import_Rest_quota_disp,
-            pvp_total_disp,
-            pvp_total_disp_movil,
-            Curr_cancel_disp,
-            Tota_cancel_disp NUM_GB_OWNN_CURR,
-            NUM_GB_2G_CURR,
-            NUM_GB_3G_CURR,
-            NUM_GB_4G_CURR,
-            NUM_GB_5G_CURR,
-            NUM_SESS_CURR,
-            NUM_SECS_CURR,
-            NUM_CALL_CURR,
-            NUM_CALL_WEEK_CURR,
-            NUM_CALL_WEEKEND_CURR,
-            NUM_SECS_WEEK_CURR,
-            NUM_SECS_WEEKEND_CURR,
-            NUM_CALL_WEEK,
-            NUM_CALL_WEEKEND,
-            NUM_DAYS_LINE_TYPE_FIXE_POST_DEA
-    FROM       `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp2022`
+        WHERE  RAND() < 0.1
+    )
+
+    SELECT 
+        customer_id,
+        MONTH,
+        YEAR,
+        NUM_DAYS_ACT,
+        order_mobile_from_new_alta,
+        service_mobile_pending_install,
+        service_fix_pending_install,
+        service_mobile_cancelled,
+        service_fix_cancelled,
+        service_mobile_pending_install_3month,
+        service_fix_pending_install_3month,
+        service_mobile_cancelled_3month,
+        service_fix_cancelled_3month,
+        service_mobile_pending_install_6month,
+        service_fix_pending_install_6month,
+        service_mobile_cancelled_6month,
+        service_fix_cancelled_6month,
+        pago_final_0,
+        dif_pago_final_prev_month,
+        dif_pago_final_prev_2_month,
+        dif_pago_final_prev_3_month,
+        periodica_0,
+        dif_periodica_prev_month,
+        dif_periodica_prev_2_month,
+        dif_periodica_prev_3_month,
+        consumo_0,
+        dif_consumo_prev_month,
+        dif_consumo_prev_2_month,
+        dif_consumo_prev_3_month,
+        aperiodica_0,
+        dif_aperiodica_prev_month,
+        dif_aperiodica_prev_2_month,
+        dif_aperiodica_prev_3_month,
+        discount_0,
+        dif_discount_prev_month,
+        dif_discount_prev_2_month,
+        dif_discount_prev_3_month,
+        ajuste_0,
+        dif_ajuste_prev_month,
+        dif_ajuste_prev_2_month,
+        dif_ajuste_prev_3_month,
+        Tota_Compra_disp,
+        Curr_Compra_disp,
+        Curr_Compra_Finanz_disp,
+        Curr_Finanz_disp,
+        Month_purchase_disp,
+        Modelo_disp,
+        Import_Rest_quota_disp,
+        pvp_total_disp,
+        pvp_total_disp_movil,
+        Curr_cancel_disp,
+        Tota_cancel_disp,
+        MIN_DAYS_PERM_CURR,
+        MIN_PENALTY_AMOUNT_CURR,
+        PREV_FINISHED_PERM,
+        NUM_GB_OWNN_CURR,
+        NUM_GB_2G_CURR,
+        NUM_GB_3G_CURR,
+        NUM_GB_4G_CURR,
+        NUM_GB_5G_CURR,
+        NUM_SESS_CURR,
+        NUM_SECS_CURR,
+        NUM_CALL_CURR,
+        NUM_CALL_WEEK_CURR,
+        NUM_CALL_WEEKEND_CURR,
+        NUM_SECS_WEEK_CURR,
+        NUM_SECS_WEEKEND_CURR,
+        NUM_CALL_WEEK,
+        NUM_CALL_WEEKEND,
+        NUM_DAYS_LINE_TYPE_FIXE_POST_DEA
+    FROM `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp2022`
     INNER JOIN customer_selected
-    ON         customer_id = selected_customer
-    WHERE      IS_CUST_SEGM_RESI > 0
-    AND        IS_CUST_BILL_POST_CURR = TRUE
-    AND        CUST_BUNDLE_CURR = 'FMC'
-    AND        NUM_IMPAGOS = 0
-    AND        pago_final_0 IS NOT NULL
+    ON customer_id = selected_customer
+    WHERE IS_CUST_SEGM_RESI > 0
+    AND IS_CUST_BILL_POST_CURR = TRUE
+    AND CUST_BUNDLE_CURR = 'FMC'
+    AND NUM_IMPAGOS = 0
+    AND pago_final_0 IS NOT NULL
     """
     # TO-DO: PARAMETRIZE THIS
     save_curves_path = "src/models"
@@ -146,7 +168,7 @@ def main_orchestrator():
     features, target, features_test, target_test = feature_computation(
         clean_data, train_from, train_to, logger
     )
-    model = modeling(features, target, logistic_regression_params, logger)
+    model = modeling(features, target, lightgbm_params, logger)
     model_metrics, precision_decile, uplift_by_decile, feature_importance = evaluation(
         model, features_test, target_test, logger, save_curves_path
     )
