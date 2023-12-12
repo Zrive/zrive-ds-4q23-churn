@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from column_config import users_cols, diff_cols, keep_cols, transform_cols, target_col
 
 
 def feature_computation(
@@ -20,67 +21,6 @@ def feature_computation(
         Series: Pandas Series representing the target variable for test set.
     """
     logger.info("Starting feature computation")
-    # user-info cols to aggregate data later on
-    users_cols = ["customer_id", "MONTH", "YEAR"]
-
-    # pre-cooked features
-    diff_cols = [
-        "dif_pago_final_prev_month",
-        "dif_pago_final_prev_2_month",
-        "dif_pago_final_prev_3_month",
-        "dif_consumo_prev_month",
-        "dif_consumo_prev_2_month",
-        "dif_consumo_prev_3_month",
-        "dif_discount_prev_month",
-        "dif_discount_prev_2_month",
-        "dif_discount_prev_3_month",
-        "service_mobile_pending_install",
-        "service_fix_pending_install",
-        "service_mobile_cancelled",
-        "service_fix_cancelled",
-        "service_mobile_pending_install_3month",
-        "service_fix_pending_install_3month",
-        "service_mobile_cancelled_3month",
-        "service_fix_cancelled_3month",
-        "service_mobile_pending_install_6month",
-        "service_fix_pending_install_6month",
-        "service_mobile_cancelled_6month",
-        "service_fix_cancelled_6month",
-    ]
-
-    # to-be-cooked features
-    transform_cols = [
-        "pago_final_0",
-        "consumo_0",
-        "aperiodica_0",
-        "discount_0",
-        "ajuste_0",
-        "NUM_GB_OWNN_CURR",
-        "NUM_GB_2G_CURR",
-        "NUM_GB_3G_CURR",
-        "NUM_GB_4G_CURR",
-        "NUM_GB_5G_CURR",
-        "NUM_SESS_CURR",
-        "NUM_SECS_CURR",
-        "NUM_CALL_CURR",
-        "NUM_CALL_WEEK_CURR",
-        "NUM_CALL_WEEKEND_CURR",
-        "NUM_SECS_WEEK_CURR",
-        "NUM_SECS_WEEKEND_CURR",
-        "NUM_CALL_WEEK",
-        "NUM_CALL_WEEKEND",
-    ]
-
-    # direct-to-model features
-    keep_cols = [
-        "NUM_DAYS_ACT",
-        "order_mobile_from_new_alta",
-        "MIN_DAYS_PERM_CURR",
-        "PREV_FINISHED_PERM",
-    ]
-
-    # target
-    target_col = ["NUM_DAYS_LINE_TYPE_FIXE_POST_DEA"]
 
     # TO-DO: Catch exceptions
     # TO-DO: Potential unit tests validating same length for features/targets
@@ -109,20 +49,30 @@ def feature_computation(
     train_df, test_df = split_train_test(
         compute_ready_data, train_from_dt, train_to_dt, test_from_dt, test_to_dt
     )
-    
-    # Need to remove users that churned previously to train_to/test_to
-    previous_churned_users_train = train_df[(train_df['date'] <= train_to_dt) & (train_df[target_col[0]] > 0)]['customer_id'].unique()
-    previous_churned_users_test = test_df[(test_df['date'] <= test_to_dt) & (test_df[target_col[0]] > 0)]['customer_id'].unique()
-    train_df = train_df[~train_df['customer_id'].isin(previous_churned_users_train)]
-    test_df = test_df[~test_df['customer_id'].isin(previous_churned_users_test)]
 
-    logger.info(f"Removing {len(previous_churned_users_train)} previous churned users from train set")
-    logger.info(f"Removing {len(previous_churned_users_test)} previous churned users from test set")
+    # Need to remove users that churned previously to train_to/test_to
+    previous_churned_users_train = train_df[
+        (train_df["date"] <= train_to_dt) & (train_df[target_col[0]] > 0)
+    ]["customer_id"].unique()
+    previous_churned_users_test = test_df[
+        (test_df["date"] <= test_to_dt) & (test_df[target_col[0]] > 0)
+    ]["customer_id"].unique()
+    train_df = train_df[~train_df["customer_id"].isin(previous_churned_users_train)]
+    test_df = test_df[~test_df["customer_id"].isin(previous_churned_users_test)]
+
+    logger.info(
+        f"Removing {len(previous_churned_users_train)} previous churned users from train set"
+    )
+    logger.info(
+        f"Removing {len(previous_churned_users_test)} previous churned users from test set"
+    )
     logger.info(f"Unique customers in train: {train_df['customer_id'].nunique()}")
     logger.info(f"Unique customers in test: {test_df['customer_id'].nunique()}")
 
     logger.info("Starting features and target computation")
-    
+    logger.info(f"Initial number of features passed: {train_df.shape[1]}")
+    logger.info("Starting computation")
+
     train_df_features = compute_features(train_df, target_col, train_to_dt)
     test_df_features = compute_features(test_df, target_col, test_to_dt)
     train_df_target = compute_target(
@@ -131,10 +81,10 @@ def feature_computation(
     test_df_target = compute_target(
         compute_ready_data, target_col, target_test_month, False
     )
-
+    logger.info(f"Final number of features computed: {train_df_features.shape[1]}")
     logger.info(f"Length train data: {len(train_df_features)}")
     logger.info(f"Length test data: {len(test_df_features)}")
-    logger.info("Features computed")
+    logger.info("Computation done!")
 
     # As there are customer that leave between the month we use for training and the target month
     # We have to join the features and the targets and drop those that don't have target. By doing this,
@@ -224,50 +174,13 @@ def compute_features(
     df = df.drop(columns=target_col)
 
     df = df.sort_values(by=["customer_id", "date"])
-    df["pago_final_prev_month"] = df.groupby("customer_id")["pago_final_0"].shift(1)
-    df["pago_final_prev_month"] = df["pago_final_prev_month"].fillna(0)
-    df["pago_final_avg_3_months"] = compute_x_months_avg(df, "pago_final_0", 3)
-    df["pago_final_avg_6_months"] = compute_x_months_avg(df, "pago_final_0", 6)
-    df["consumo_avg_3_months"] = compute_x_months_avg(df, "consumo_0", 3)
-    df["consumo_avg_6_months"] = compute_x_months_avg(df, "consumo_0", 6)
-    df["aperiodica_avg_3_months"] = compute_x_months_avg(df, "aperiodica_0", 3)
-    df["aperiodica_avg_6_months"] = compute_x_months_avg(df, "aperiodica_0", 6)
-    df["discount_avg_3_months"] = compute_x_months_avg(df, "discount_0", 3)
-    df["discount_avg_6_months"] = compute_x_months_avg(df, "discount_0", 6)
-    df["ajuste_avg_3_months"] = compute_x_months_avg(df, "ajuste_0", 3)
-    df["ajuste_avg_6_months"] = compute_x_months_avg(df, "ajuste_0", 6)
-    df["NUM_GB_OWNN_CURR_avg_3_months"] = compute_x_months_avg(
-        df, "NUM_GB_OWNN_CURR", 3
-    )
-    df["NUM_GB_OWNN_CURR_avg_6_months"] = compute_x_months_avg(
-        df, "NUM_GB_OWNN_CURR", 6
-    )
-    df["NUM_SECS_CURR_avg_3_months"] = compute_x_months_avg(df, "NUM_SECS_CURR", 3)
-    df["NUM_SECS_CURR_avg_6_months"] = compute_x_months_avg(df, "NUM_SECS_CURR", 6)
-    df["NUM_CALL_WEEK_CURR_avg_3_months"] = compute_x_months_avg(
-        df, "NUM_CALL_WEEK_CURR", 3
-    )
-    df["NUM_CALL_WEEK_CURR_avg_6_months"] = compute_x_months_avg(
-        df, "NUM_CALL_WEEK_CURR", 6
-    )
-    df["NUM_CALL_WEEKEND_CURR_avg_3_months"] = compute_x_months_avg(
-        df, "NUM_CALL_WEEKEND_CURR", 3
-    )
-    df["NUM_CALL_WEEKEND_CURR_avg_6_months"] = compute_x_months_avg(
-        df, "NUM_CALL_WEEKEND_CURR", 6
-    )
-    df["NUM_SECS_WEEK_CURR_avg_3_months"] = compute_x_months_avg(
-        df, "NUM_SECS_WEEK_CURR", 3
-    )
-    df["NUM_SECS_WEEK_CURR_avg_6_months"] = compute_x_months_avg(
-        df, "NUM_SECS_WEEK_CURR", 6
-    )
-    df["NUM_SECS_WEEKEND_CURR_avg_3_months"] = compute_x_months_avg(
-        df, "NUM_SECS_WEEKEND_CURR", 3
-    )
-    df["NUM_SECS_WEEKEND_CURR_avg_6_months"] = compute_x_months_avg(
-        df, "NUM_SECS_WEEKEND_CURR", 6
-    )
+
+    # Dynamically compute features for each col in transform_cols
+    for col in transform_cols:
+        df[f"{col}_prev_month"] = df.groupby("customer_id")[col].shift(1)
+        # df[f"{col}_prev_month"] = df[f"{col}_prev_month"].fillna(0)
+        df[f"{col}_avg_3_months"] = compute_x_months_avg(df, col, 3)
+        df[f"{col}_avg_6_months"] = compute_x_months_avg(df, col, 6)
 
     # Filter only the computation backwards from the last month
     df = df[df["date"] == train_to_dt]
