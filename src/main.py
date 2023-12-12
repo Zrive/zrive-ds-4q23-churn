@@ -6,6 +6,7 @@ from modeling import modeling
 from evaluation import evaluation
 from utils.logger import get_logger
 
+
 # Instantiate logger
 logger = get_logger(__name__)
 
@@ -86,77 +87,7 @@ def main_orchestrator():
         WHERE  RAND() < 0.1
     )
 
-    SELECT 
-        customer_id,
-        MONTH,
-        YEAR,
-        NUM_DAYS_ACT,
-        order_mobile_from_new_alta,
-        service_mobile_pending_install,
-        service_fix_pending_install,
-        service_mobile_cancelled,
-        service_fix_cancelled,
-        service_mobile_pending_install_3month,
-        service_fix_pending_install_3month,
-        service_mobile_cancelled_3month,
-        service_fix_cancelled_3month,
-        service_mobile_pending_install_6month,
-        service_fix_pending_install_6month,
-        service_mobile_cancelled_6month,
-        service_fix_cancelled_6month,
-        pago_final_0,
-        dif_pago_final_prev_month,
-        dif_pago_final_prev_2_month,
-        dif_pago_final_prev_3_month,
-        periodica_0,
-        dif_periodica_prev_month,
-        dif_periodica_prev_2_month,
-        dif_periodica_prev_3_month,
-        consumo_0,
-        dif_consumo_prev_month,
-        dif_consumo_prev_2_month,
-        dif_consumo_prev_3_month,
-        aperiodica_0,
-        dif_aperiodica_prev_month,
-        dif_aperiodica_prev_2_month,
-        dif_aperiodica_prev_3_month,
-        discount_0,
-        dif_discount_prev_month,
-        dif_discount_prev_2_month,
-        dif_discount_prev_3_month,
-        ajuste_0,
-        dif_ajuste_prev_month,
-        dif_ajuste_prev_2_month,
-        dif_ajuste_prev_3_month,
-        Tota_Compra_disp,
-        Curr_Compra_disp,
-        Curr_Compra_Finanz_disp,
-        Curr_Finanz_disp,
-        Month_purchase_disp,
-        Modelo_disp,
-        Import_Rest_quota_disp,
-        pvp_total_disp,
-        pvp_total_disp_movil,
-        Curr_cancel_disp,
-        Tota_cancel_disp,
-        MIN_DAYS_PERM_CURR,
-        MIN_PENALTY_AMOUNT_CURR,
-        PREV_FINISHED_PERM,
-        NUM_GB_OWNN_CURR,
-        NUM_GB_2G_CURR,
-        NUM_GB_3G_CURR,
-        NUM_GB_4G_CURR,
-        NUM_GB_5G_CURR,
-        NUM_SESS_CURR,
-        NUM_SECS_CURR,
-        NUM_CALL_CURR,
-        NUM_CALL_WEEK_CURR,
-        NUM_CALL_WEEKEND_CURR,
-        NUM_SECS_WEEK_CURR,
-        NUM_SECS_WEEKEND_CURR,
-        NUM_CALL_WEEK,
-        NUM_CALL_WEEKEND,
-        NUM_DAYS_LINE_TYPE_FIXE_POST_DEA
+    SELECT *
     FROM `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp2022`
     INNER JOIN customer_selected
     ON customer_id = selected_customer
