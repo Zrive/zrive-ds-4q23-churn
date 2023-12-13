@@ -40,10 +40,17 @@ def get_initial_params():
     # Load LightGBM parameters
     lightgbm_params = {
         "boosting_type": config.get("LIGHTGBM", "boosting_type", fallback="gbdt"),
-        "num_leaves": config.getint("LIGHTGBM", "num_leaves", fallback=31),
+        "num_leaves": config.getint("LIGHTGBM", "num_leaves", fallback=12),
         "max_depth": config.getint("LIGHTGBM", "max_depth", fallback=-1),
-        "learning_rate": config.getfloat("LIGHTGBM", "learning_rate", fallback=0.1),
+        "learning_rate": config.getfloat("LIGHTGBM", "learning_rate", fallback=0.005),
         "n_estimators": config.getint("LIGHTGBM", "n_estimators", fallback=100),
+        "random_state": config.getint("LIGHTGBM", "random_state", fallback=500),
+        "colsample_bytree": config.getfloat(
+            "LIGHTGBM", "colsample_bytree", fallback=0.64
+        ),
+        "subsample": config.getfloat("LIGHTGBM", "subsample", fallback=0.7),
+        "reg_alpha": config.getint("LIGHTGBM", "reg_alpha", fallback=0),
+        "reg_lambda": config.getint("LIGHTGBM", "reg_lambda", fallback=1),
     }
 
 
