@@ -20,9 +20,16 @@ def data_cleaning(raw_df: pd.DataFrame, logger) -> pd.DataFrame:
             columns_to_drop.append(col)
             logger.info(f"Dropping column {col}")
         elif number_nulls > 0:
-            clean_df[col] = clean_df[col].fillna(value=0)
+            # clean_df[col] = clean_df[col].fillna(value=0)
+            logger.info("Should fillna")
 
-    clean_df = clean_df.drop(columns=columns_to_drop)
+    # clean_df = clean_df.drop(columns=columns_to_drop)
+    clean_df["MAX_PENALTY_AMOUNT_CURR"] = clean_df["MAX_PENALTY_AMOUNT_CURR"].astype(
+        float
+    )
+    clean_df["MIN_PENALTY_AMOUNT_CURR"] = clean_df["MIN_PENALTY_AMOUNT_CURR"].astype(
+        float
+    )
 
     logger.info("Completed cleaning data!")
     logger.info(clean_df.head())

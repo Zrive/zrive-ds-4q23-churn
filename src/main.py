@@ -99,12 +99,19 @@ def main_orchestrator():
     """
     # TO-DO: PARAMETRIZE THIS
     save_curves_path = "src/models"
+    save_features_path = "src/features"
+    save_target_path = "src/target"
 
     get_initial_params()
     raw_data = data_gathering(query, logger)
     clean_data = data_cleaning(raw_data, logger)
     features, target, features_test, target_test = feature_computation(
-        clean_data, train_from, train_to, logger
+        clean_data,
+        train_from,
+        train_to,
+        logger,
+        save_features_path=save_features_path,
+        save_target_path=save_target_path,
     )
     model = modeling(features, target, lightgbm_params, logger)
     model_metrics, precision_decile, uplift_by_decile, feature_importance = evaluation(

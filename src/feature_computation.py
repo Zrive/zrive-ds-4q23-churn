@@ -9,6 +9,8 @@ def feature_computation(
     train_to: str,
     logger,
     keep_gap_month_churns: bool = False,
+    save_features_path: str = "",
+    save_target_path: str = "",
 ) -> (pd.DataFrame, pd.Series, pd.DataFrame, pd.Series):
     """
     Split data into train and test features set, aggregate the data into historical behavior for those cols needed.
@@ -109,18 +111,25 @@ def feature_computation(
     ]
 
     # Split train and test features + target (squeeze into 1D array)
-    features = features_and_target_train.drop(
-        columns=target_col + users_cols + ["date"]
-    )
-    features_test = features_and_target_test.drop(
-        columns=target_col + users_cols + ["date"]
-    )
+    features = features_and_target_train.drop(columns=target_col + users_cols)
+    features_test = features_and_target_test.drop(columns=target_col + users_cols)
     target = features_and_target_train[target_col].squeeze()
     target_test = features_and_target_test[target_col].squeeze()
 
     logger.info(f"Features: {features.columns.tolist()}")
     logger.info(f"Target: {target.name}")
     logger.info("Completed feature computation!")
+
+    try:
+        features.to_csv(f"{save_features_path}/features.csv", index=False)
+        features_test.to_csv(f"{save_features_path}/features_test.csv", index=False)
+        target.to_csv(f"{save_target_path}/target.csv", index=False)
+        target_test.to_csv(f"{save_target_path}/target_test.csv", index=False)
+        logger.info(f"Features saved on {save_features_path}")
+        logger.info(f"Targets saved on {save_target_path}")
+    except:
+        logger.info(f"Features not saved on {save_features_path}")
+        logger.info(f"Targets not saved on {save_target_path}")
 
     return features, target, features_test, target_test
 
@@ -178,6 +187,7 @@ def compute_features(
     df = df.drop(columns=target_col)
 
     df = df.sort_values(by=["customer_id", "date"])
+    df.set_index("date", inplace=True)
 
     # Dynamically compute features for each col in transform_cols
     for col in transform_cols:
@@ -185,11 +195,14 @@ def compute_features(
         # df[f"{col}_prev_month"] = df[f"{col}_prev_month"].fillna(0)
         df[f"{col}_avg_3_months"] = compute_x_months_avg(df, col, 3)
         df[f"{col}_avg_6_months"] = compute_x_months_avg(df, col, 6)
+        df[f"{col}_std_3_months"] = compute_x_months_std(df, col, 3)
+        df[f"{col}_std_6_months"] = compute_x_months_std(df, col, 6)
 
     # Filter only the computation backwards from the last month
-    df = df[df["date"] == train_to_dt]
+    train_to_str = train_to_dt.strftime("%Y-%m-%d")
+    df = df.loc[train_to_str]
 
-    return df
+    return df.reset_index(drop=True)
 
 
 def compute_x_months_avg(
@@ -205,8 +218,32 @@ def compute_x_months_avg(
     Returns:
         DataFrame: Pandas DataFrame the new computed column.
     """
-    return df.groupby("customer_id")[col_name].transform(
-        lambda x: x.rolling(window=months, min_periods=1).mean()
+    return (
+        df.groupby("customer_id")[col_name]
+        .rolling(window=months, min_periods=1)
+        .mean()
+        .reset_index(level=0, drop=True)
+    )
+
+
+def compute_x_months_std(
+    df: pd.DataFrame, col_name: list[str], months: int
+) -> pd.DataFrame:
+    """
+    Compute the mean of the last months for a column.
+    Args:
+        df: The clean dataset with the columns we want to use as features.
+        col_name: Name of the column to compute
+        months: Number of months we want to compute the feature back
+
+    Returns:
+        DataFrame: Pandas DataFrame the new computed column.
+    """
+    return (
+        df.groupby("customer_id")[col_name]
+        .rolling(window=months, min_periods=1)
+        .std()
+        .reset_index(level=0, drop=True)
     )
 
 
