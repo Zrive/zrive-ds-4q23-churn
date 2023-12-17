@@ -121,10 +121,14 @@ def feature_computation(
     logger.info("Completed feature computation!")
 
     try:
-        features.to_csv(f"{save_features_path}/features.csv", index=False)
-        features_test.to_csv(f"{save_features_path}/features_test.csv", index=False)
-        target.to_csv(f"{save_target_path}/target.csv", index=False)
-        target_test.to_csv(f"{save_target_path}/target_test.csv", index=False)
+        features.to_parquet(f"{save_features_path}/features.parquet", index=False)
+        features_test.to_parquet(
+            f"{save_features_path}/features_test.parquet", index=False
+        )
+        target.to_frame().to_parquet(f"{save_target_path}/target.parquet", index=False)
+        target_test.to_frame().to_parquet(
+            f"{save_target_path}/target_test.parquet", index=False
+        )
         logger.info(f"Features saved on {save_features_path}")
         logger.info(f"Targets saved on {save_target_path}")
     except:
@@ -187,7 +191,7 @@ def compute_features(
     df = df.drop(columns=target_col)
 
     df = df.sort_values(by=["customer_id", "date"])
-    df.set_index("date", inplace=True)
+    df = df.set_index("date")
 
     # Dynamically compute features for each col in transform_cols
     for col in transform_cols:

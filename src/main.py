@@ -1,4 +1,5 @@
 import configparser
+from column_config import diff_cols, keep_cols, users_cols, target_col, transform_cols
 from data_gathering import data_gathering
 from data_cleaning import data_cleaning
 from feature_computation import feature_computation
@@ -74,7 +75,7 @@ def main_orchestrator():
         dict: Evaluation results of the trained model, containing key performance metrics.
     """
 
-    query = """
+    query = f"""
     WITH selectable_customer AS (
         SELECT customer_id
         FROM `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp2022`
@@ -87,7 +88,7 @@ def main_orchestrator():
         WHERE  RAND() < 0.1
     )
 
-    SELECT *
+    SELECT {", ".join(diff_cols + keep_cols + users_cols + target_col + transform_cols)}
     FROM `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp2022`
     INNER JOIN customer_selected
     ON customer_id = selected_customer
