@@ -160,7 +160,7 @@ def split_train_test(
     """
     # Create date col to mix month and year
     df["date"] = pd.to_datetime(
-        df["year"].astype(str) + "-" + df["MONTH"].astype(str) + "-01"
+        df["YEAR"].astype(str) + "-" + df["MONTH"].astype(str) + "-01"
     )
 
     # Filter compute_data for the specific date intervals.

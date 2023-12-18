@@ -1,7 +1,7 @@
 # COLS to be used across functions
 
 # user-info cols to aggregate data later on
-users_cols = ["customer_id", "MONTH", "year"]
+users_cols = ["customer_id", "MONTH", "YEAR"]
 
 # pre-cooked features
 diff_cols = [
