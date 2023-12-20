@@ -97,7 +97,7 @@ def main_orchestrator():
     )
 
     SELECT {", ".join(diff_cols + keep_cols + users_cols + target_col + transform_cols)}
-    FROM `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp2022`
+    FROM all_periods
     INNER JOIN customer_selected
     ON customer_id = selected_customer
     WHERE IS_CUST_SEGM_RESI > 0
