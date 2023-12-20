@@ -76,16 +76,24 @@ def main_orchestrator():
     """
 
     query = f"""
-    WITH selectable_customer AS (
+    WITH all_periods AS (
+    SELECT * 
+    FROM `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp2022`
+    UNION ALL 
+    SELECT * 
+    FROM `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp2023_1`
+    ), 
+
+    selectable_customer AS (
         SELECT customer_id
-        FROM `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp2022`
+        FROM all_periods
         GROUP BY customer_id
     ), 
 
     customer_selected AS (
         SELECT customer_id AS selected_customer
-        FROM   selectable_customer
-        WHERE  RAND() < 0.1
+        FROM selectable_customer
+    WHERE MOD(ABS(FARM_FINGERPRINT(CAST(customer_id AS STRING))), 10) < 2
     )
 
     SELECT {", ".join(diff_cols + keep_cols + users_cols + target_col + transform_cols)}
@@ -98,6 +106,7 @@ def main_orchestrator():
     AND NUM_IMPAGOS = 0
     AND pago_final_0 IS NOT NULL
     """
+    
     # TO-DO: PARAMETRIZE THIS
     save_curves_path = "src/models"
     save_features_path = "src/features"
