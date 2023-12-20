@@ -76,24 +76,16 @@ def main_orchestrator():
     """
 
     query = f"""
-    WITH all_periods AS (
-    SELECT * 
-    FROM `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp2022`
-    UNION ALL 
-    SELECT * 
-    FROM `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp2023_1`
-    ), 
-
-    selectable_customer AS (
+    WITH selectable_customer AS (
         SELECT customer_id
-        FROM all_periods
+        FROM `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp2022`
         GROUP BY customer_id
     ), 
 
     customer_selected AS (
         SELECT customer_id AS selected_customer
-        FROM selectable_customer
-    WHERE MOD(ABS(FARM_FINGERPRINT(CAST(customer_id AS STRING))), 10) < 2
+        FROM   selectable_customer
+        WHERE  RAND() < 0.1
     )
 
     SELECT {", ".join(diff_cols + keep_cols + users_cols + target_col + transform_cols)}
