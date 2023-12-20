@@ -76,35 +76,30 @@ def main_orchestrator():
     """
 
     query = f"""
-    WITH all_periods AS (
-    SELECT * 
-    FROM `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp2022`
-    UNION ALL 
-    SELECT * 
-    FROM `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp2023_1`
-    ), 
-
-    selectable_customer AS (
-        SELECT customer_id
-        FROM all_periods
-        GROUP BY customer_id
-    ), 
-
-    customer_selected AS (
-        SELECT customer_id AS selected_customer
-        FROM selectable_customer
-    WHERE MOD(ABS(FARM_FINGERPRINT(CAST(customer_id AS STRING))), 10) < 2
-    )
-
-    SELECT {", ".join(diff_cols + keep_cols + users_cols + target_col + transform_cols)}
-    FROM all_periods
-    INNER JOIN customer_selected
-    ON customer_id = selected_customer
-    WHERE IS_CUST_SEGM_RESI > 0
-    AND IS_CUST_BILL_POST_CURR = TRUE
-    AND CUST_BUNDLE_CURR = 'FMC'
-    AND NUM_IMPAGOS = 0
-    AND pago_final_0 IS NOT NULL
+        WITH all_periods AS
+        (
+            SELECT *
+            FROM   `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp2022`
+            UNION ALL
+            SELECT *
+            FROM   `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp2023_1` ), selectable_customer AS
+        (
+                SELECT   customer_id
+                FROM     all_periods
+                GROUP BY customer_id ), customer_selected AS
+        (
+            SELECT customer_id AS selected_customer
+            FROM   selectable_customer
+            WHERE  MOD(ABS(FARM_FINGERPRINT(CAST(customer_id AS STRING))), 10) < 2 )
+        SELECT     {", ".join(diff_cols + keep_cols + users_cols + target_col + transform_cols)}
+        FROM       all_periods
+        INNER JOIN customer_selected
+        ON         customer_id = selected_customer
+        WHERE      IS_CUST_SEGM_RESI > 0
+        AND        IS_CUST_BILL_POST_CURR = TRUE
+        AND        CUST_BUNDLE_CURR = 'FMC'
+        AND        NUM_IMPAGOS = 0
+        AND        pago_final_0 IS NOT NULL
     """
     
     # TO-DO: PARAMETRIZE THIS
