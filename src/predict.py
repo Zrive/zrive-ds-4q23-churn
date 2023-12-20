@@ -124,39 +124,39 @@ def gather_data_in_chunks(EOP_from, EOP_to, limit: int, offset: int) -> pd.DataF
         DataFrame: Pandas DataFrame with chunked data.
     """
     query = f"""
-    WITH all_periods AS (
-    SELECT *
-    FROM `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp2022`
-    UNION ALL 
-    SELECT *
-    FROM `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp2023_1`
-    ), 
-
-    selectable_customer AS (
-        SELECT customer_id
-        FROM all_periods
-        GROUP BY customer_id
-    ), 
-
-    customer_selected AS (
-        SELECT customer_id AS selected_customer
-        FROM selectable_customer
-        WHERE MOD(ABS(FARM_FINGERPRINT(CAST(customer_id AS STRING))), 1) = 0
-        LIMIT {limit}
-        OFFSET {offset}
-    )
-
-    SELECT {", ".join(diff_cols + keep_cols + users_cols + target_col + transform_cols)}
-    FROM all_periods
+    WITH all_periods
+    AS
+    (
+            SELECT *
+            FROM   `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp2022`
+            UNION ALL
+            SELECT *
+            FROM   `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp2023_1` ),
+    selectable_customer
+    AS
+    (
+            SELECT   customer_id
+            FROM     all_periods
+            GROUP BY customer_id ),
+    customer_selected
+    AS
+    (
+            SELECT   customer_id AS selected_customer
+            FROM     selectable_customer
+            ORDER BY customer_id
+            LIMIT    {limit}
+            OFFSET   {offset} )
+    SELECT     {", ".join(diff_cols + keep_cols + users_cols + target_col + transform_cols)}
+    FROM       all_periods
     INNER JOIN customer_selected
-    ON customer_id = selected_customer
-    WHERE IS_CUST_SEGM_RESI > 0
-    AND IS_CUST_BILL_POST_CURR = TRUE
-    AND CUST_BUNDLE_CURR = 'FMC'
-    AND NUM_IMPAGOS = 0
-    AND pago_final_0 IS NOT NULL
-    AND EOP >= "{EOP_from}"
-    AND EOP <= "{EOP_to}"
+    ON         customer_id = selected_customer
+    WHERE      is_cust_segm_resi > 0
+    AND        is_cust_bill_post_curr = TRUE
+    AND        cust_bundle_curr = 'FMC'
+    AND        num_impagos = 0
+    AND        pago_final_0 IS NOT NULL
+    AND        eop >= "{EOP_from}"
+    AND        eop <= "{EOP_to}"
     """
 
     return data_gathering(query, logger)
@@ -197,22 +197,22 @@ def predict_orchestrator() -> pd.DataFrame:
     )
 
     query = """
-    WITH all_periods AS (
-    SELECT *
-    FROM `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp2022`
-    UNION ALL 
-    SELECT *
-    FROM `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp2023_1`
-    ), 
-
-    selectable_customer AS (
-        SELECT customer_id
-        FROM all_periods
-        GROUP BY customer_id
-    )
-
-    SELECT count(*) as n_lines
-    FROM selectable_customer
+    WITH all_periods
+    AS
+    (
+            SELECT *
+            FROM   `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp2022`
+            UNION ALL
+            SELECT *
+            FROM   `mm-bi-catedras-upm.ESTIMACION_CHURN.multibrand_monthly_customer_base_mp2023_1` ),
+    selectable_customer
+    AS
+    (
+            SELECT   customer_id
+            FROM     all_periods
+            GROUP BY customer_id )
+    SELECT count(*) AS n_lines
+    FROM   selectable_customer
     """
 
     n_chunks = 3
@@ -223,7 +223,7 @@ def predict_orchestrator() -> pd.DataFrame:
     preds_per_customer = pd.DataFrame()
 
     model = load_model()
-    for chunk in range(0, n_chunks - 1):
+    for chunk in range(0, n_chunks):
         logger.info(f"Executing chunk number {chunk}")
         raw_df = gather_data_in_chunks(EOP_from, EOP_to, limit, limit * chunk)
         clean_data = data_cleaning(raw_df, logger)
