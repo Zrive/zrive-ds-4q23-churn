@@ -3,10 +3,16 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 import lightgbm as lgb
+import pickle
+import os
 
 
 def modeling(
-    features: pd.DataFrame, target: pd.Series, lightgbm_params, logger
+    features: pd.DataFrame,
+    target: pd.Series,
+    lightgbm_params,
+    logger,
+    model_save_path: str = None,
 ) -> Pipeline:
     """
     Prepares a machine learning pipeline that scales features and trains a logistic regression model
@@ -62,5 +68,10 @@ def modeling(
     model = pipeline.fit(features, target)
 
     logger.info("Completed model training!")
+
+    if model_save_path:
+        path_name_model = os.path.join(model_save_path, "model.lgb")
+        pickle.dump(model, open(path_name_model, "wb"))
+        logger.info(f"Model saved in {path_name_model}")
 
     return model
