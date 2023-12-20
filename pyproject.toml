@@ -23,6 +23,7 @@ nbconvert = "^7.11.0"
 pandoc = "^2.3"
 datetime = "^5.3"
 lightgbm = "^4.1.0"
+shap = "^0.44.0"
 
 [build-system]
 requires = ["poetry-core"]
