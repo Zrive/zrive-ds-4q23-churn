@@ -52,6 +52,7 @@ def get_initial_params():
         "subsample": config.getfloat("LIGHTGBM", "subsample", fallback=0.7),
         "reg_alpha": config.getint("LIGHTGBM", "reg_alpha", fallback=0),
         "reg_lambda": config.getint("LIGHTGBM", "reg_lambda", fallback=1),
+        "path_smooth": config.getfloat("LIGHTGBM", "path_smooth", fallback=0.2),
     }
 
 
@@ -101,7 +102,7 @@ def main_orchestrator():
         AND        NUM_IMPAGOS = 0
         AND        pago_final_0 IS NOT NULL
     """
-    
+
     # TO-DO: PARAMETRIZE THIS
     save_curves_path = "src/models"
     save_features_path = "src/features"
