@@ -118,7 +118,7 @@ def main_orchestrator():
         save_features_path=save_features_path,
         save_target_path=save_target_path,
     )
-    model = modeling(features, target, lightgbm_params, logger)
+    model = modeling(features, target, lightgbm_params, logger, save_curves_path)
     model_metrics, precision_decile, uplift_by_decile, feature_importance = evaluation(
         model, features_test, target_test, logger, save_curves_path
     )
