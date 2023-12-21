@@ -82,10 +82,10 @@ def feature_computation(
     train_df_features = compute_features(train_df, target_col, train_to_dt)
     test_df_features = compute_features(test_df, target_col, test_to_dt)
     train_df_target = compute_target(
-        compute_ready_data, target_col, target_train_month, keep_gap_month_churns
+        compute_ready_data, target_col, target_train_month, keep_gap_month_churns=False
     )
     test_df_target = compute_target(
-        compute_ready_data, target_col, target_test_month, keep_gap_month_churns
+        compute_ready_data, target_col, target_test_month, keep_gap_month_churns=False
     )
     logger.info(f"Final number of features computed: {train_df_features.shape[1]}")
     logger.info(f"Length train data: {len(train_df_features)}")
@@ -292,12 +292,16 @@ def compute_target(
     if keep_gap_month_churns:
         # Convert all values that are 2 (gap month churns) into 1 (real churns)
         target_df[col] = np.where(target_df[col] == 2, 1, target_df[col])
+        target_df = target_df[(target_df["NUM_DAYS_LINE_TYPE_FIXE_POST_DEA"] != 2)][
+            ["customer_id"] + target_col
+        ]
 
-    # Exclude the records that are still marked as 2 (gap month churns) if keep_gap_month_churns is False
-    target_df = target_df[
-        (target_df["NUM_DAYS_LINE_TYPE_FIXE_POST_DEA"] != 2)
-        & (target_df["date"] != drop_churn_between_month)
-    ][["customer_id"] + target_col]
+    else:
+        # Exclude the records that are still marked as 2 (gap month churns) if keep_gap_month_churns is False
+        target_df = target_df[
+            (target_df["NUM_DAYS_LINE_TYPE_FIXE_POST_DEA"] != 2)
+            & (target_df["date"] != drop_churn_between_month)
+        ][["customer_id"] + target_col]
 
     target_df[target_col] = target_df[target_col].astype("int")
 
