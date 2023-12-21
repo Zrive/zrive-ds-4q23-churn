@@ -110,7 +110,17 @@ def predict(features: pd.DataFrame, model: Pipeline) -> pd.DataFrame:
     return preds_per_customer
 
 
-def gather_data_in_chunks(EOP_from, EOP_to, limit: int, offset: int) -> pd.DataFrame:
+def save_predictions(
+    predictions: pd.DataFrame,
+    predictions_path: str = "src/predictions",
+    file_name: str = "predictions.parquet",
+) -> None:
+    predictions.to_parquet(f"{predictions_path}/{file_name}", index=False)
+
+
+def gather_data_in_chunks(
+    EOP_from, EOP_to, from_customer_range: int, to_customer_range: int
+) -> pd.DataFrame:
     """
     Gather data in chunks as all the data doesn't fit in memory.
     Chunks are managged by the LIMIT and OFFSET functions
@@ -123,7 +133,7 @@ def gather_data_in_chunks(EOP_from, EOP_to, limit: int, offset: int) -> pd.DataF
     Returns:
         DataFrame: Pandas DataFrame with chunked data.
     """
-    query = f"""
+    gather_data_in_chunks_sql = f"""
     WITH all_periods
     AS
     (
@@ -141,11 +151,9 @@ def gather_data_in_chunks(EOP_from, EOP_to, limit: int, offset: int) -> pd.DataF
     customer_selected
     AS
     (
-            SELECT   customer_id AS selected_customer
-            FROM     selectable_customer
-            ORDER BY customer_id
-            LIMIT    {limit}
-            OFFSET   {offset} )
+            SELECT   customer_id                                            AS selected_customer,
+                     row_number() over(partition BY 1 ORDER BY customer_id) AS rn
+            FROM     selectable_customer )
     SELECT     {", ".join(diff_cols + keep_cols + users_cols + target_col + transform_cols)}
     FROM       all_periods
     INNER JOIN customer_selected
@@ -157,9 +165,10 @@ def gather_data_in_chunks(EOP_from, EOP_to, limit: int, offset: int) -> pd.DataF
     AND        pago_final_0 IS NOT NULL
     AND        eop >= "{EOP_from}"
     AND        eop <= "{EOP_to}"
+    AND        rn BETWEEN {from_customer_range} AND {to_customer_range}
     """
 
-    return data_gathering(query, logger)
+    return data_gathering(gather_data_in_chunks_sql, logger)
 
 
 def predict_orchestrator() -> pd.DataFrame:
@@ -196,7 +205,7 @@ def predict_orchestrator() -> pd.DataFrame:
         f"Predicting for {predict_month_dt}, computing features from {predict_month_from_dt} to {predict_month_to_dt}"
     )
 
-    query = """
+    get_number_of_customers_sql = """
     WITH all_periods
     AS
     (
@@ -216,16 +225,23 @@ def predict_orchestrator() -> pd.DataFrame:
     """
 
     n_chunks = 3
-    number_lines = data_gathering(query, logger)["n_lines"].values[0]
+    number_lines = data_gathering(get_number_of_customers_sql, logger)[
+        "n_lines"
+    ].values[0]
 
-    limit = (number_lines // n_chunks) + 1
+    customer_chunks_range = (number_lines // n_chunks) + 1
 
     preds_per_customer = pd.DataFrame()
 
     model = load_model()
     for chunk in range(0, n_chunks):
         logger.info(f"Executing chunk number {chunk}")
-        raw_df = gather_data_in_chunks(EOP_from, EOP_to, limit, limit * chunk)
+        raw_df = gather_data_in_chunks(
+            EOP_from,
+            EOP_to,
+            customer_chunks_range * chunk,
+            (customer_chunks_range * chunk) + customer_chunks_range - 1,
+        )
         clean_data = data_cleaning(raw_df, logger)
         features_predict = feature_computation_to_predict(
             clean_data, predict_month_to_dt
@@ -233,12 +249,12 @@ def predict_orchestrator() -> pd.DataFrame:
         if preds_per_customer.empty:
             preds_per_customer = predict(features_predict, model)
         else:
-            print("HERE")
             preds_per_customer = pd.concat(
                 [preds_per_customer, predict(features_predict, model)],
                 ignore_index=True,
             )
 
+    save_predictions(preds_per_customer)
     return preds_per_customer
 
 

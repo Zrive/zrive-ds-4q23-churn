@@ -140,10 +140,10 @@ def feature_computation(
 
 def split_train_test(
     df: pd.DataFrame,
-    train_from: pd.Series,
-    train_to: pd.Series,
-    test_from: pd.Series,
-    test_to: pd.Series,
+    train_from: pd.Timestamp,
+    train_to: pd.Timestamp,
+    test_from: pd.Timestamp,
+    test_to: pd.Timestamp,
 ) -> (pd.DataFrame, pd.DataFrame):
     """
     Split data into train and test.

@@ -1,5 +1,23 @@
 import pandas as pd
-from column_config import users_cols, diff_cols, keep_cols, transform_cols, target_col
+from column_config import (
+    users_cols,
+    diff_cols,
+    keep_cols,
+    transform_cols,
+    target_col,
+)
+
+
+def column_to_float(df: pd.DataFrame, col_name: str) -> pd.DataFrame:
+    """
+    Change type of the column values to float
+    Args:
+        df: original dataframe we want to change the type
+        col_name: name of the column we want to change the type
+    Returns:
+        DataFrame: Only one column with float type.
+    """
+    return df[col_name].astype(float)
 
 
 def data_cleaning(raw_df: pd.DataFrame, logger) -> pd.DataFrame:
@@ -24,11 +42,11 @@ def data_cleaning(raw_df: pd.DataFrame, logger) -> pd.DataFrame:
             logger.info("Should fillna")
 
     # clean_df = clean_df.drop(columns=columns_to_drop)
-    clean_df["MAX_PENALTY_AMOUNT_CURR"] = clean_df["MAX_PENALTY_AMOUNT_CURR"].astype(
-        float
+    clean_df["MAX_PENALTY_AMOUNT_CURR"] = column_to_float(
+        clean_df, "MAX_PENALTY_AMOUNT_CURR"
     )
-    clean_df["MIN_PENALTY_AMOUNT_CURR"] = clean_df["MIN_PENALTY_AMOUNT_CURR"].astype(
-        float
+    clean_df["MIN_PENALTY_AMOUNT_CURR"] = column_to_float(
+        clean_df, "MIN_PENALTY_AMOUNT_CURR"
     )
 
     logger.info("Completed cleaning data!")
